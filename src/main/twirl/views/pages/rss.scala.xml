@@ -1,0 +1,24 @@
+@(posts: Array[models.Post])
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+<channel>
+        <title>@message("site.title")</title>
+        <description>@message("site.title") - @message("author.name")</description>
+        <link>@message("production_url")/rss.xml</link>
+        <link>@message("production_url")</link>
+        <lastBuildDate>@{new DateTime()}</lastBuildDate>
+        <pubDate>@{new DateTime()}</pubDate>
+        <ttl>1800</ttl>
+
+ @for(post <- posts){
+        <item>
+                <title>@post.title</title>
+                <description>@post.html</description>
+                <link>@message("production_url")/post/@post.name</link>
+                <guid>@message("production_url")/post/@post.name</guid>
+                <pubDate>@post.date</pubDate>
+        </item>
+}
+
+</channel>
+</rss>

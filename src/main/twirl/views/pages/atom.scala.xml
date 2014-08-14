@@ -1,0 +1,23 @@
+@(posts: Array[models.Post])
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+ <title>@message("site.title")</title>
+ <link href="@message("production_url")/atom.xml" rel="self"/>
+ <link href="@message("production_url")"/>
+ <updated>@{new DateTime()}</updated>
+ <id>@message("production_url")</id>
+ <author>
+   <name>@message("author.name")</name>
+   <email>@message("author.email")</email>
+ </author>
+
+ @for(post <- posts){
+ <entry>
+   <title>@post.title</title>
+   <link href="post/@post.name"/>
+   <updated>@post.date</updated>
+   <id>@message("production_url")/post/@post.name</id>
+   <content type="html">@post.html</content>
+ </entry>
+ }
+</feed>
