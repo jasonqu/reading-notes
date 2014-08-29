@@ -12,9 +12,9 @@ tags : [todo, "to read", project]
 
 [JavaScript 人脸识别技术](http://www.iteye.com/news/29033)
 
+[Kraken：PayPal公司的开源Node.js框架](http://www.iteye.com/news/28488-kraken-Node-js-web-framework-from-paypal)
 
-
-
+[Essay：搜狐Python项目自动化部署最佳实践](http://www.iteye.com/news/28495-essay-sohu-python-auto-deploy-tool)
 
 
 
