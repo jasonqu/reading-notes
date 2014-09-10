@@ -6,11 +6,12 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", web, javascript, css]
 ---
 
+
 TODO 
 [《跟我学Shiro》PDF完结版下载](http://www.iteye.com/news/28980-shiro)
 
 
-
+[Java8Update20的新特性——字符串去重](http://www.iteye.com/news/29338)
 
 [Java高速、多线程虚拟内存的实现](http://www.iteye.com/news/29158)
 
