@@ -1,0 +1,12 @@
+funny
+
+		List<A> l = new ArrayList<>();
+		List<Object> l1 = (List<Object>) l;
+
+		编译错误
+
+	private static List<Object> eraseTypeInfo(List<? extends Object> list) {
+		return (List<Object>) list;
+	}
+	List<Object> l2 = eraseTypeInfo(l);
+没问题。。。
