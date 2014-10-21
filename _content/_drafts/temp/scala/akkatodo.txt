@@ -1,0 +1,4 @@
+http://doc.akka.io/docs/akka/2.3.6/scala/actors.html
+
+http://www.gtan.com/akka_doc/scala/actors.html
+使用匿名类创建Actor
