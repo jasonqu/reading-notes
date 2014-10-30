@@ -1,0 +1,560 @@
+jason version 1 target：
+对基本类型可以进行转换
+
+首先我们使用Gson的stream api
+
+这里是一个实例：
+Suppose we'd like to parse a stream of messages such as the following:
+ [
+   {
+     "id": 912345678901,
+     "text": "How do I read a JSON stream in Java?",
+     "geo": null,
+     "user": {
+       "name": "json_newb",
+       "followers_count": 41
+      }
+   },
+   {
+     "id": 912345678902,
+     "text": "@json_newb just use JsonReader!",
+     "geo": [50.454722, -104.606667],
+     "user": {
+       "name": "jesse",
+       "followers_count": 2
+     }
+   }
+ ]}
+This code implements the parser for the above structure:
+   
+
+   public List readJsonStream(InputStream in) throws IOException {
+     JsonReader reader = new JsonReader(new InputStreamReader(in, "UTF-8"));
+     try {
+       return readMessagesArray(reader);
+     } finally {
+       reader.close();
+     }
+   }
+
+   public List readMessagesArray(JsonReader reader) throws IOException {
+     List messages = new ArrayList();
+
+     reader.beginArray();
+     while (reader.hasNext()) {
+       messages.add(readMessage(reader));
+     }
+     reader.endArray();
+     return messages;
+   }
+
+   public Message readMessage(JsonReader reader) throws IOException {
+     long id = -1;
+     String text = null;
+     User user = null;
+     List geo = null;
+
+     reader.beginObject();
+     while (reader.hasNext()) {
+       String name = reader.nextName();
+       if (name.equals("id")) {
+         id = reader.nextLong();
+       } else if (name.equals("text")) {
+         text = reader.nextString();
+       } else if (name.equals("geo") && reader.peek() != JsonToken.NULL) {
+         geo = readDoublesArray(reader);
+       } else if (name.equals("user")) {
+         user = readUser(reader);
+       } else {
+         reader.skipValue();
+       }
+     }
+     reader.endObject();
+     return new Message(id, text, user, geo);
+   }
+
+   public List readDoublesArray(JsonReader reader) throws IOException {
+     List doubles = new ArrayList();
+
+     reader.beginArray();
+     while (reader.hasNext()) {
+       doubles.add(reader.nextDouble());
+     }
+     reader.endArray();
+     return doubles;
+   }
+
+   public User readUser(JsonReader reader) throws IOException {
+     String username = null;
+     int followersCount = -1;
+
+     reader.beginObject();
+     while (reader.hasNext()) {
+       String name = reader.nextName();
+       if (name.equals("name")) {
+         username = reader.nextString();
+       } else if (name.equals("followers_count")) {
+         followersCount = reader.nextInt();
+       } else {
+         reader.skipValue();
+       }
+     }
+     reader.endObject();
+     return new User(username, followersCount);
+   }}
+
+这是一个简明的底层api，可以在此基础上进行封装，完成Adapter的功能
+
+TypeAdapter可以提供类似这样的功能，通过调用JsonReader的 api实现的功能
+   public class PointAdapter extends TypeAdapter {
+     public Point read(JsonReader reader) throws IOException {
+       if (reader.peek() == JsonToken.NULL) {
+         reader.nextNull();
+         return null;
+       }
+       String xy = reader.nextString();
+       String[] parts = xy.split(",");
+       int x = Integer.parseInt(parts[0]);
+       int y = Integer.parseInt(parts[1]);
+       return new Point(x, y);
+     }
+     public void write(JsonWriter writer, Point value) throws IOException {
+       if (value == null) {
+         writer.nullValue();
+         return;
+       }
+       String xy = value.getX() + "," + value.getY();
+       writer.value(xy);
+     }
+   }}
+如果不想重复的写null check代码，可以使用nullsafe方法来检验
+   Gson gson = new GsonBuilder().registerTypeAdapter(Foo.class,
+   new TypeAdapter() {
+     public Foo read(JsonReader in) throws IOException {
+       // read a Foo from in and return it
+     }
+     public void write(JsonWriter out, Foo src) throws IOException {
+       // write src as JSON to out
+     }
+   }.nullSafe()).create();
+ }
+ 
+逻辑很清晰，功能是很简单，但是现在我们需要把Adapter都实现出来： 
+我们先使用Gson实现的几个，例如整数和字符串：
+  public static final TypeAdapter<Number> INTEGER = new TypeAdapter<Number>() {
+    @Override
+    public Number read(JsonReader in) throws IOException {
+      if (in.peek() == JsonToken.NULL) {
+        in.nextNull();
+        return null;
+      }
+      try {
+        return in.nextInt();
+      } catch (NumberFormatException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    @Override
+    public void write(JsonWriter out, Number value) throws IOException {
+      out.value(value);
+    }
+  };
+
+  public static final TypeAdapter<String> STRING = new TypeAdapter<String>() {
+    @Override
+    public String read(JsonReader in) throws IOException {
+      JsonToken peek = in.peek();
+      if (peek == JsonToken.NULL) {
+        in.nextNull();
+        return null;
+      }
+      return in.nextString();
+    }
+    @Override
+    public void write(JsonWriter out, String value) throws IOException {
+      out.value(value);
+    }
+  };
+ps. 不知道为什么这里都没有使用nullsafe方式，产生了很多冗余代码
+
+使用类似这样的代码就可以实现为不同的类型提供不同的adapter
+  @SuppressWarnings("unchecked")
+  public <T> TypeAdapter<T> getAdapter(Type type) {
+    if(type== Integer.class)
+    return (TypeAdapter<T>) TypeAdapters.INTEGER;
+    return (TypeAdapter<T>) TypeAdapters.STRING ;
+  }
+但是这样的代码显然不够灵活
+
+
+
+
+2. 增加灵活性
+为每个类写adapter，灵活性就太差了，所以要：
+做一些通用的Adapter，
+做一些灵活的Adapter注册的机制
+
+首先通用的Adapter，比较典型的是EnumTypeAdapter
+  private static final class EnumTypeAdapter<T extends Enum<T>> extends TypeAdapter<T> {
+    private final Map<String, T> nameToConstant = new HashMap<String, T>();
+    private final Map<T, String> constantToName = new HashMap<T, String>();
+
+    public EnumTypeAdapter(Class<T> classOfT) {
+      try {
+        for (T constant : classOfT.getEnumConstants()) {
+          String name = constant.name();
+          SerializedName annotation = classOfT.getField(name).getAnnotation(SerializedName.class);
+          if (annotation != null) {
+            name = annotation.value();
+          }
+          nameToConstant.put(name, constant);
+          constantToName.put(constant, name);
+        }
+      } catch (NoSuchFieldException e) {
+        throw new AssertionError();
+      }
+    }
+    public T read(JsonReader in) throws IOException {
+      if (in.peek() == JsonToken.NULL) {
+        in.nextNull();
+        return null;
+      }
+      return nameToConstant.get(in.nextString());
+    }
+
+    public void write(JsonWriter out, T value) throws IOException {
+      out.value(value == null ? null : constantToName.get(value));
+    }
+  }
+
+更进一步可以用factory处理Adapter的创建
+  public static TypeAdapterFactory newEnumTypeHierarchyFactory() {
+    return new TypeAdapterFactory() {
+      @SuppressWarnings({"rawtypes", "unchecked"})
+      public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
+        Class<? super T> rawType = typeToken.getRawType();
+        if (!Enum.class.isAssignableFrom(rawType) || rawType == Enum.class) {
+          return null;
+        }
+        if (!rawType.isEnum()) {
+          rawType = rawType.getSuperclass(); // handle anonymous subclasses
+        }
+        return (TypeAdapter<T>) new EnumTypeAdapter(rawType);
+      }
+    };
+  }
+  
+还有就是java的类是有父类的，所以需要建立一个adapter 关于类的树形结构
+
+另外为了引入泛型的类型，所以引入了类
+public class TypeToken<T> {
+  final Class<? super T> rawType;
+  final Type type;
+  final int hashCode;
+  }
+  
+  TypeToken<T>
+
+
+Represents a generic type T. Java doesn't yet provide a way to represent generic types, so this class does. Forces clients to create a subclass of this class which enables retrieval the type information even at runtime. 
+
+For example, to create a type literal for List<String>, you can create an empty anonymous inner class: 
+
+TypeToken> list = new TypeToken>() {};} 
+
+This syntax cannot be used to create type literals that have wildcard parameters, such as Class<?> or List<? extends CharSequence>.
+
+  
+还有相对应的Factory
+
+类似的注册方法：
+  public static <TT> TypeAdapterFactory newFactoryForMultipleTypes(final Class<TT> base,
+      final Class<? extends TT> sub, final TypeAdapter<? super TT> typeAdapter) {
+    return new TypeAdapterFactory() {
+      @SuppressWarnings("unchecked") // we use a runtime check to make sure the 'T's equal
+      public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
+        Class<? super T> rawType = typeToken.getRawType();
+        return (rawType == base || rawType == sub) ? (TypeAdapter<T>) typeAdapter : null;
+      }
+      @Override public String toString() {
+        return "Factory[type=" + base.getName()
+            + "+" + sub.getName() + ",adapter=" + typeAdapter + "]";
+      }
+    };
+  }
+
+  public static <TT> TypeAdapterFactory newTypeHierarchyFactory(
+      final Class<TT> clazz, final TypeAdapter<TT> typeAdapter) {
+    return new TypeAdapterFactory() {
+      @SuppressWarnings("unchecked")
+      public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
+        return clazz.isAssignableFrom(typeToken.getRawType()) ? (TypeAdapter<T>) typeAdapter : null;
+      }
+      @Override public String toString() {
+        return "Factory[typeHierarchy=" + clazz.getName() + ",adapter=" + typeAdapter + "]";
+      }
+    };
+  }
+
+使用Tree处理:
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+
+其中JsonElement 是虚拟基类
+声明的方法
+  abstract JsonElement deepCopy();
+  public boolean getAsBoolean() etc for primitives
+  
+实现的方法
+  public boolean isJsonArray() etc
+  public JsonObject getAsJsonArray() etc
+  toString
+
+JsonNull 略
+JsonPrimitive 基本类型
+  private static final Class<?>[] PRIMITIVE_TYPES = { int.class, long.class, short.class,
+      float.class, double.class, byte.class, boolean.class, char.class, Integer.class, Long.class,
+      Short.class, Float.class, Double.class, Byte.class, Boolean.class, Character.class };
+
+  private static boolean isPrimitiveOrString(Object target) {
+    if (target instanceof String) {
+      return true;
+    }
+
+    Class<?> classOfPrimitive = target.getClass();
+    for (Class<?> standardPrimitive : PRIMITIVE_TYPES) {
+      if (standardPrimitive.isAssignableFrom(classOfPrimitive)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+JsonArray
+类似一个Array的对象，其重点实现是这样的：
+  private final List<JsonElement> elements = new ArrayList<JsonElement>();
+
+  @Override
+  JsonArray deepCopy() {
+    JsonArray result = new JsonArray();
+    for (JsonElement element : elements) {
+      result.add(element.deepCopy());
+    }
+    return result;
+  }
+  public void add(JsonElement element) {
+没有remove方法
+
+JsonObject
+类似一个Map<String, JsonElement>的对象，具体实现是google自己的LinkedTreeMap实现
+  private final LinkedTreeMap<String, JsonElement> members =
+      new LinkedTreeMap<String, JsonElement>();
+
+  @Override
+  JsonObject deepCopy() {
+    JsonObject result = new JsonObject();
+    for (Map.Entry<String, JsonElement> entry : members.entrySet()) {
+      result.add(entry.getKey(), entry.getValue().deepCopy());
+    }
+    return result;
+  }
+  public void add(String property, JsonElement value) {
+  public JsonElement remove(String property) {
+还有就是Map的一些公用方法
+
+要把文本变成JsonElement的数据结构，可以使用内置的JSON_ELEMENT adapter
+  public static final TypeAdapter<JsonElement> JSON_ELEMENT = new TypeAdapter<JsonElement>() {
+    @Override public JsonElement read(JsonReader in) throws IOException {
+      switch (in.peek()) {
+      case STRING:
+        return new JsonPrimitive(in.nextString());
+      case NUMBER:
+        String number = in.nextString();
+        return new JsonPrimitive(new LazilyParsedNumber(number));
+      case BOOLEAN:
+        return new JsonPrimitive(in.nextBoolean());
+      case NULL:
+        in.nextNull();
+        return JsonNull.INSTANCE;
+      case BEGIN_ARRAY:
+        JsonArray array = new JsonArray();
+        in.beginArray();
+        while (in.hasNext()) {
+          array.add(read(in));
+        }
+        in.endArray();
+        return array;
+      case BEGIN_OBJECT:
+        JsonObject object = new JsonObject();
+        in.beginObject();
+        while (in.hasNext()) {
+          object.add(in.nextName(), read(in));
+        }
+        in.endObject();
+        return object;
+      case END_DOCUMENT:
+      case NAME:
+      case END_OBJECT:
+      case END_ARRAY:
+      default:
+        throw new IllegalArgumentException();
+      }
+    }
+
+    @Override public void write(JsonWriter out, JsonElement value) throws IOException {
+      if (value == null || value.isJsonNull()) {
+        out.nullValue();
+      } else if (value.isJsonPrimitive()) {
+        JsonPrimitive primitive = value.getAsJsonPrimitive();
+        if (primitive.isNumber()) {
+          out.value(primitive.getAsNumber());
+        } else if (primitive.isBoolean()) {
+          out.value(primitive.getAsBoolean());
+        } else {
+          out.value(primitive.getAsString());
+        }
+
+      } else if (value.isJsonArray()) {
+        out.beginArray();
+        for (JsonElement e : value.getAsJsonArray()) {
+          write(out, e);
+        }
+        out.endArray();
+
+      } else if (value.isJsonObject()) {
+        out.beginObject();
+        for (Map.Entry<String, JsonElement> e : value.getAsJsonObject().entrySet()) {
+          out.name(e.getKey());
+          write(out, e.getValue());
+        }
+        out.endObject();
+
+      } else {
+        throw new IllegalArgumentException("Couldn't write " + value.getClass());
+      }
+    }
+  };
+
+对一个不知道对象类型的json，我们可以直接转成一个数据结构：使用ObjectTypeAdapter
+它跳过了JsonElememt的封装，而是直接使用ArrayList和LinkedTreeMap来构建
+
+
+
+查看 Gson核心方法
+com.google.gson.Gson.Gson()
+
+Constructs a Gson object with default configuration. The default configuration has the following settings:
+
+The JSON generated by toJson methods is in compact representation. This means that all the unneeded white-space is removed. You can change this behavior with GsonBuilder.setPrettyPrinting().
+默认是遗憾展示，可以调成美观的展示GsonBuilder.setPrettyPrinting().
+The generated JSON omits all the fields that are null. Note that nulls in arrays are kept as is since an array is an ordered list. Moreover, if a field is not null, but its generated JSON is empty, the field is kept. You can configure Gson to serialize null values by setting GsonBuilder.serializeNulls().
+默认是去掉null变量的GsonBuilder.serializeNulls().
+Gson provides default serialization and deserialization for Enums, Map, java.net.URL, java.net.URI, java.util.Locale, java.util.Date, java.math.BigDecimal, and java.math.BigInteger classes. If you would prefer to change the default representation, you can do so by registering a type adapter through GsonBuilder.registerTypeAdapter(Type, Object).
+Gson默认提供了Enums, Map, java.net.URL, java.net.URI, java.util.Locale, java.util.Date, java.math.BigDecimal, and java.math.BigInteger 这些类的typeadapter
+The default Date format is same as java.text.DateFormat.DEFAULT. This format ignores the millisecond portion of the date during serialization. You can change this by invoking GsonBuilder.setDateFormat(int) or GsonBuilder.setDateFormat(String).
+日期默认格式是java.text.DateFormat.DEFAULT，可用这样设定 GsonBuilder.setDateFormat(int) or GsonBuilder.setDateFormat(String)
+By default, Gson ignores the com.google.gson.annotations.Expose annotation. You can enable Gson to serialize/deserialize only those fields marked with this annotation through GsonBuilder.excludeFieldsWithoutExposeAnnotation().
+
+By default, Gson ignores the com.google.gson.annotations.Since annotation. You can enable Gson to use this annotation through GsonBuilder.setVersion(double).
+
+The default field naming policy for the output Json is same as in Java. So, a Java class field versionNumber will be output as "versionNumber@quot; in Json. The same rules are applied for mapping incoming Json to the Java classes. You can change this policy through GsonBuilder.setFieldNamingPolicy(FieldNamingPolicy).
+
+By default, Gson excludes transient or static fields from consideration for serialization and deserialization. You can change this behavior through GsonBuilder.excludeFieldsWithModifiers(int).
+
+
+Gson初始化
+    this.constructorConstructor = new ConstructorConstructor(instanceCreators);
+    this.serializeNulls = serializeNulls;
+    this.generateNonExecutableJson = generateNonExecutableGson;
+    this.htmlSafe = htmlSafe;
+    this.prettyPrinting = prettyPrinting;
+
+    List<TypeAdapterFactory> factories = new ArrayList<TypeAdapterFactory>();
+
+    // built-in type adapters that cannot be overridden
+    factories.add(TypeAdapters.JSON_ELEMENT_FACTORY);
+    factories.add(ObjectTypeAdapter.FACTORY);
+
+    // the excluder must precede all adapters that handle user-defined types
+    factories.add(excluder);
+    用来限定一些特殊的annotation
+
+    // user's type adapters
+    factories.addAll(typeAdapterFactories);
+
+    // type adapters for basic platform types
+    factories.add(TypeAdapters.STRING_FACTORY);
+    factories.add(TypeAdapters.INTEGER_FACTORY);
+    factories.add(TypeAdapters.BOOLEAN_FACTORY);
+    factories.add(TypeAdapters.newFactory(long.class, Long.class,
+            longAdapter(longSerializationPolicy)));
+    factories.add(TypeAdapters.newFactory(double.class, Double.class,
+            doubleAdapter(serializeSpecialFloatingPointValues)));
+    factories.add(TypeAdapters.newFactory(BigDecimal.class, TypeAdapters.BIG_DECIMAL));
+    factories.add(TypeAdapters.newFactory(BigInteger.class, TypeAdapters.BIG_INTEGER));
+    factories.add(DateTypeAdapter.FACTORY);
+    factories.add(TimeTypeAdapter.FACTORY);
+    factories.add(ArrayTypeAdapter.FACTORY);
+    factories.add(TypeAdapters.ENUM_FACTORY);
+    factories.add(TypeAdapters.CLASS_FACTORY);
+
+    // type adapters for composite and user-defined types
+    factories.add(new CollectionTypeAdapterFactory(constructorConstructor));
+    factories.add(new MapTypeAdapterFactory(constructorConstructor, complexMapKeySerialization));
+    factories.add(new ReflectiveTypeAdapterFactory(constructorConstructor, fieldNamingPolicy, excluder));
+
+    this.factories = Collections.unmodifiableList(factories);
+
+
+
+
+  public <T> TypeAdapter<T> getAdapter(TypeToken<T> type) {
+    TypeAdapter<?> cached = typeTokenCache.get(type);
+    if (cached != null) {
+      return (TypeAdapter<T>) cached;
+    }
+
+    Map<TypeToken<?>, FutureTypeAdapter<?>> threadCalls = calls.get();
+    boolean requiresThreadLocalCleanup = false;
+    if (threadCalls == null) {
+      threadCalls = new HashMap<TypeToken<?>, FutureTypeAdapter<?>>();
+      calls.set(threadCalls);
+      requiresThreadLocalCleanup = true;
+    }
+
+    // the key and value type parameters always agree
+    FutureTypeAdapter<T> ongoingCall = (FutureTypeAdapter<T>) threadCalls.get(type);
+    if (ongoingCall != null) {
+      return ongoingCall;
+    }
+
+    try {
+      FutureTypeAdapter<T> call = new FutureTypeAdapter<T>();
+      threadCalls.put(type, call);
+
+      for (TypeAdapterFactory factory : factories) {
+        TypeAdapter<T> candidate = factory.create(this, type);
+        if (candidate != null) {
+          call.setDelegate(candidate);
+          typeTokenCache.put(type, candidate);
+          return candidate;
+        }
+      }
+      throw new IllegalArgumentException("GSON cannot handle " + type);
+    } finally {
+      threadCalls.remove(type);
+
+      if (requiresThreadLocalCleanup) {
+        calls.remove();
+      }
+    }
+  }
+
+
+
+
+
+

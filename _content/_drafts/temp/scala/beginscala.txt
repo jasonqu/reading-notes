@@ -1,0 +1,373 @@
+chapter 3
+Range 是延迟初始化的
+(1 to Integer.MAX_VALUE - 1).take(5)
+
+List 方法
+初始化
+1 :: 2 :: 3 :: Nil
+List(1,2,3)
+
+加元素
+99 :: x
+x ::: y
+
+filter remove
+List(1,2,3).filter(x => x % 2 == 1)
+List(1,2,3).remove(x => x % 2 == 1)
+
+take while
+"Elwood eats mice".takeWhile(c => c != ' ')
+
+map
+List("A", "Cat").map(_.toLowerCase)
+List("A", "Cat").map(_.length)
+ist(a,d,e).map(n => <li>{n.first}</li>)
+
+sort
+List(99, 2, 1, 45).sort(_ < _)
+
+First Name of Valid Persons, Sorted by Age
+def validByAge(in: List[Person]) = in.filter(_.valid).
+sort(_.age < _.age). map(_.first)
+
+reduce函数
+List(8, 6, 22, 2).reduceLeft(_ max _)
+List(1,2,3,4).foldLeft(0) (_ + _)
+List(1,2,3,4).foldLeft(1) (_ * _)
+
+构造多级List
+val n = (1 to 3).toList
+n.map(i => n.map(j => i * j))
+此时结果是
+List[List[Int]] = List(List(1, 2, 3), List(2, 4, 6), List(3, 6, 9))
+可以使用flatmap来将多级队列变为一级
+n.flatMap(i => n.map(j => i * j))
+
+
+n.filter(isEven).flatMap(i => n.filter(isOdd).map(j => i * j))
+和
+for {i <- n if isEven(i); j <- n if isOdd(j)} yield i * j
+在bytecode层级上是一样的
+
+例子 罗马数字到阿拉伯数字转化 P66
+
+
+Tuple 元组
+def sumSq(in: List[Double]): (Int, Double, Double) =
+in.foldLeft((0, 0d, 0d))((t, v) => (t._1 + 1, t._2 + v, t._3 + v * v))
+多个返回值的时候很有用
+
+也可以写为这样，更加可读
+ef sumSq(in: List[Double]) : (Int, Double, Double) =
+in.foldLeft((0, 0d, 0d)){
+case((cnt,sum,sq),v)=> (cnt+1,sum+v,sq+v*v)}
+
+二元组
+scala> Tuple2(1,2) == Pair(1,2) 
+scala> Pair(1,2) == (1,2) 
+scala> (1,2) == 1 -> 2
+
+
+
+Map[K, V] 哈希表
+var p = Map(1 -> "David", 9 -> "Elwood")
+修改p 只能用这样的方式
+p = p + 8 -> "Archer"
+或
+p += 8 -> "Archer"
+
+直接使用apply方法，在没有值得时候抛出异常
+scala> p(9)
+res12: java.lang.String = Elwood
+scala> p(88)
+java.util.NoSuchElementException: key not found: 88
+
+但是使用get方法，如果没有值将得到None，否则是一个Some
+scala> p.get(88)
+res10: Option[java.lang.String] = None
+scala> p.get(9)
+res11: Option[java.lang.String] = Some(Elwood)
+
+也可以加一个默认值
+scala> p.getOrElse(99, "Nobody")
+res55: java.lang.String = Nobody
+scala> p.getOrElse(1, "Nobody")
+res56: java.lang.String = David
+
+获取一个key集的结果集
+scala> 1 to 5 flatMap(p.get)
+res53: Seq.Projection[java.lang.String] = RangeG(David)
+
+其他方法
+-= --= 是remove
+contains exists 前面的参数是集合参数，后面是一个bool的方法
+p.keys.reduceLeft(_ max _)
+p.values.reduceLeft(_ max _)
+
+def removeInvalid(in: Map[Int, Person]) = in.filter(kv => kv._2.valid)
+
+
+Option[T]
+Option[T] provides a container for zero or one element of a given type. Option provides a very powerful alternative to Java’s null. An Option[T] can be either Some[T] or None. None is an object. There is a single instance of None in your Scala program, so it’s kind of like null. But None has methods on it, so you can invoke map, flatMap, filter, foreach, and so on no matter whether you have Some or None.
+是一个有Some或None 对象的类，可以用来避免NPE
+
+如有一个从数据库中获取实体的方法
+def findPerson(key: Int): Option[Person]
+可以直接有一个获取年龄的方法
+def ageFromKey(key: Int): Option[Int] = findPerson(key).map(_.age)
+另个方法都是返回Some或None
+
+看一下在类型转化上的应用
+import java.lang.{Boolean => JBool}
+def tryo[T](f: => T): Option[T] = try {Some(f)} catch {case _ => None}
+
+def toInt(s: String): Option[Int] = tryo(s.toInt)
+def toBool(s: String) = tryo(JBool.parseBoolean(s))
+
+实例 从一个Map获取Person对象 P97 有java代码对比
+def personFromParams(p: Map[String, String]): Option[Person] = 
+	for {name <- p.get("name")
+	ageStr <- p.get("age")
+	age <- toInt(ageStr) 
+	validStr <- p.get("valid") 
+	valid <- toBool(validStr)}
+yield new Person(name, age, valid)
+
+Some
+scala> Some(3).get
+res57: Int = 3
+But be careful, because if the Option is None, an exception will be raised: 
+scala> None.get
+java.util.NoSuchElementException: None.get
+
+Like Map, Option has a getOrElse method that returns a default value if the contents are undefined:
+scala> Some(3).getOrElse(44)
+res59: Int = 3
+
+
+
+XML
+scala> <b id="greeting">Hello World</b>
+res1: scala.xml.Elem = <b id="greeting">Hello World</b>
+scala> <b ns:hi='hello'>Hello</b>
+res2: scala.xml.Elem = <b ns:hi="hello">Hello</b>
+
+Scala represents XML as a Seq[Node], and Node is a superclass of NodeSeq, which is a subclass of Seq[Node]. That means all the collections methods that we’ve been exploring are available on XML collections including map, flatMap, filter, and foreach. This also means that XML can be used in for comprehensions. We’ll explore that in the next subsection.
+scala> def len(seq: Seq[_]) = seq.length
+￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼￼len: (Seq[_])Int
+
+scala> len(<b>Hello</b>)
+res1: Int = 1
+scala> len(List(1,2,3))
+res11: Int = 3
+
+XML 可以被动态生成
+def now = System.currentTimeMillis.toString
+<b time={now}>Hello World</b>
+
+<stuff>{(1 to 3).map(i => <v id={i.toString}>#{i}</v>)} </stuff>
+
+但是if 后面必须有 else
+<b>{if (true) "dogs"}</b> wrong
+<b>{if (true) "dogs" else ""}</b> right
+
+Scala correctly escapes characters from your Scala expressions:
+scala> <b>{"Hello & Goodbye"}</b>
+res3: scala.xml.Elem = <b>Hello &amp; Goodbye</b>
+scala> <b attr={"Hello < Zoo"}/>
+res6: scala.xml.Elem = <b attr="Hello &lt; Zoo"></b>
+
+but if you’re trying to embed a script in your XML, it might not be the right thing:
+You can use PCData to embed unescaped characters in your XML: 
+scala> <script>{PCData(info)}</script>
+
+
+Parsing XML
+import scala.xml._
+val xml = XML.load("http://demo.liftweb.net/")
+
+all the <a> tags in the document
+xml \\ "a"
+The \\ (double backslash) operator finds all the tags with the given label in the document. The \ (single backslash) operator finds all the tags with the given label that are direct chil- dren of the current tag.
+
+(xml \\ "a").map(_ \ "@href").map(_.text).filter(_ startsWith "http:")
+res11: Seq[String] = ArrayBuffer(http://liftweb.net, http://scala-lang.org, ...
+
+res11: Seq[String] = ArrayBuffer(http://liftweb.net, http://scala-lang.org, ...
+
+scala> val x2 = <x>{(1 to 3).map(i => <i>{i}</i>)}</x>
+x2: scala.xml.Elem = <x><i>1</i><i>2</i><i>3</i></x>
+Let’s find all the <i> tags: 
+scala> x2 \ "i"
+res26: scala.xml.NodeSeq = <i>1</i><i>2</i><i>3</i>
+Now, get the text from each tag:
+scala> (x2 \ "i").map(_.text)
+res27: Seq[String] = ArrayBufferRO(1, 2, 3)
+and convert to an Int:
+scala> (x2 \ "i").map(_.text.toInt)
+res28: Seq[Int] = ArrayBufferRO(1, 2, 3)
+Finally, we sum up the collection:
+scala> (x2 \ "i").map(_.text.toInt).foldLeft(0)(_ + _)
+res29: Int = 6
+
+
+Modifying XML
+import scala.xml._
+import scala.xml.transform._
+val removeIt = new RewriteRule {
+	override def transform(n: Node): NodeSeq = n match {
+		case e: Elem if (e \ "@instruction").text == "remove" => NodeSeq.Empty
+		case n => n 
+	}
+}
+
+val xmlBooks =
+<books instruction="update">
+<book instruction="remove" name="book1" status=""/>
+<book instruction="add" name="book2" status=""/> </books>
+
+new RuleTransformer(removeIt).transform(xmlBooks)
+详见 P109
+
+
+Concurrency Without Synchronization
+P111 Listing 3-8. Multics.scala
+
+
+
+
+Chapter 4 函数
+
+函数就是对象
+scala> val f: Int => String = x => "Dude: "+x
+f: Int => String = <function1>
+
+可以作为参数传入
+scala> def w42(f: Int => String) = f(42)
+w42: (f: Int => String)String
+scala> w42(f)
+res4: String = Dude: 42
+
+几种调用方式
+scala> w42((i:Int) => f(i))
+scala> w42(i => f(i))
+scala> w42(f(_))
+scala> w42(f)
+
+desuger后的方法是这样的：
+w42(new Function1[Int, String] { 
+def apply(i: Int) = f(i)
+})
+
+scala> w42(new Function1[Int, String] { def apply(i: Int) = f(i)})
+scala> w42 {i => (1 to i).mkString(",")}
+
+
+
+Partial Application and Functions
+
+Methods and functions are different things. In Scala, everything except a method is an instance; therefore methods are not instances. Methods are attached to instances and can be invoked on instances. Functions are instances that implement a FunctionNN trait, where NN is the number of parameters the function takes. There’s nothing magic at runtime about functions. However, at compile time, there is plenty of syntactic sugar that makes the number of characters required to create a function very, very small.
+Scala traces its roots to functional languages including ML and Haskell. In these languages, a function that takes two Ints and returns a String is the same as a function that takesanIntandreturnsafunctionthattakesanIntandreturnsaString.Thus(Int, Int) => String and Int => Int => String are the same in Haskell but not in Scala. Haskell makes it easy to create a new function by applying the first parameter to a function that will return a new function that can then be passed around or applied. This is called partial application because some of the parameters are passed to the function rather than all the parameters being applied to the function. Scala requires a separate syntax to automatically generate partially applied functions.
+scala> def plus(a: Int, b: Int) = "Result is: "+(a + b)
+plus: (a: Int, b: Int)String
+
+scala> val p = (b: Int) => plus(42, b)
+p: Int => String = <function1>
+
+It turns out that partial application of functions is a common thing. It allows you to build up functions based on values in a given scope and allows for better code reuse. Scala
+provides syntax to make it easier to build partially applied functions. Parameters can be specified in different parenthesis groups:
+
+scala> def add(a: Int)(b: Int) = "Result is: "+(a + b)
+add: (a: Int)(b: Int)String
+
+scala> add(1)(2)
+res19: String = Result is: 3
+
+scala> add(1){new java.util.Random().nextInt(100)}
+res20: String = Result is: 16
+
+
+It also allows you to easily promote a method to a partially applied function very easily:
+scala> w42(add(1))
+res21: String = Result is: 43
+
+You can also create a function by partially applying a method and converting this into a function
+scala> def f2 = add(1) _
+f2: Int => String
+scala> w42(f2)
+res22: String = Result is: 43
+
+
+Functions and Type Parameters
+Methods can have type parameters. Type parameters define the type of other parameters or of the method’s return value. Note that functions cannot take type parameters. The parameter and return types of a function must be defined when the function is created.
+
+scala> def t42[T](f: Int => T): T = f(42)
+t42: [T](f: Int => T)T
+
+So, we can pass our f function, Int => String, and t42 returns a String:
+scala> t42(f)
+res23: String = Dude: 42
+
+But, if we pass in a function that returns an Int, t42 returns an Int:
+scala> t42(1 +)
+warning: there were 1 feature warning(s); re-run with -feature for details
+res24: Int = 43
+
+可以显示定义为这样
+t42[Int](1 +)
+
+
+Functions Bound to Variables in Scope
+Functions are bound to the variables in the scope in which the function is created. This can come in very handy as it allows you to carry state around with them. For example, let’s create a variable, foo, and assign it a value
+scala> val foo = "dog"
+foo: String = dog
+
+scala> val whoTo = (s: String) => s+" "+foo
+whoTo: String => String = <function1>
+
+scala> whoTo("I love my")
+res25: String = I love my dog
+
+Functions can be bound to vars and vals. 
+可以在方法内部修改变量
+scala> var strs: List[String] = Nil
+strs: List[String] = List()
+
+scala> val strF = (s: String) => {strs ::= s; s+" Registered"}
+strF: String => String = <function1>
+
+scala> strF("a")
+res26: String = a Registered
+
+scala> strF("b")
+res27: String = b Registered
+
+scala> strs
+res28: List[String] = List(b, a)
+
+scala> List("p", "q", "r").map(strF)
+res29: List[String] = List(p Registered, q Registered, r Registered)
+
+scala> strs
+res30: List[String] = List(r, q, p, b, a)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
