@@ -6,8 +6,9 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", project]
 ---
 
+[如何用JavaScript编写简单的解释器](http://www.labazhou.net/2014/11/how-to-write-a-simple-interpreter-in-javascript/)
 
-
+[15款值得学习的小型开源项目](http://www.iteye.com/news/29751)
 
 [让你的Node.js应用跑得更快的10个技巧](http://www.iteye.com/news/29301)
 

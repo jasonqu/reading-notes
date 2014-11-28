@@ -6,6 +6,13 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", career]
 ---
 
+[技术创始人如何挑选非技术合伙人？](http://www.techug.com/how-to-choose-founder)
+
+[创业公司失败的20大原因 没市场需求排第一](http://www.techug.com/reasons-of-startup-fail)
+http://www.techug.com/wordpress/wp-content/uploads/2014/09/20140926212336a8f74_550.png?b3f84b
+
+[程序员如何参与创业](http://www.techug.com/programmer-and-startup) good!
+
 [创业CEO分享：如何“驾驭”你的投资人](http://www.iteye.com/news/29474)
 一个良好投资人关系的三要诀是——信任、沟通和支持
 

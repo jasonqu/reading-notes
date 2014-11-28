@@ -54,3 +54,30 @@ public class A {
 		this.value = value;
 	}
 }
+
+
+
+另一个密
+        long start = System.currentTimeMillis();
+        //System.out.println();
+        for(int i = 0; i < 10; i++) {
+            ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+            executorService.shutdown();
+        }
+        long end = System.currentTimeMillis();
+        System.out.println("shut down finished " + (end - start));
+
+
+        不是线性变化的
+
+
+
+
+
+
+
+
+
+
+

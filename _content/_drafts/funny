@@ -10,3 +10,52 @@ funny
 	}
 	List<Object> l2 = eraseTypeInfo(l);
 没问题。。。
+
+
+
+java executer service 达到thread join的功能
+
+http://stackoverflow.com/questions/1250643/how-to-wait-for-all-threads-to-finish-using-executorservice
+
+public class A {
+    public static void main(String[] args) {
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+        for(int i = 0; i < 25; i++) {
+            final int j = i;
+            executorService.execute(new Runnable() {
+                public void run() {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println("Asynchronous task " + j);
+                }
+            });
+        }
+
+        System.out.println("shut down");
+        executorService.shutdown();
+        System.out.println("shut down finished");
+
+        try {
+            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (InterruptedException e) {
+        }
+        System.out.println("awaitTermination finished");
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

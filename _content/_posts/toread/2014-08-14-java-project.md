@@ -7,6 +7,13 @@ tags : [todo, "to read", web, javascript, css]
 ---
 
 
+
+[关于Java你可能不知道的10件事](http://www.iteye.com/news/29814)
+
+[Kontraktor：Task、Actor调度的另一个选择](http://www.iteye.com/news/29667)
+
+[Java开发者值得关注的7款新工具](http://www.iteye.com/news/29616) 都是收费的
+
 TODO 
 [《跟我学Shiro》PDF完结版下载](http://www.iteye.com/news/28980-shiro)
 
