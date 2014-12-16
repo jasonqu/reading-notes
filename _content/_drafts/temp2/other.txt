@@ -1,0 +1,16 @@
+https://en.wikipedia.org/wiki/Walter_Pitts
+
+http://fab.cba.mit.edu/classes/863.14/people/matthew_arbesfeld/2014/12/14/final-project/
+
+老猪(43284683) 22:19:48 
+干嘛老是比较语言的裸性能，没啥意义
+老猪(43284683) 22:20:31 
+jvm系和非jvm系的应用场景很好分，根本没有什么好纠结的
+老猪(43284683) 22:21:39 
+动态类型和静态类型的选择也容易，想要快糙猛就动态，想要长久维护就静态，非常简单
+老猪(43284683) 22:22:40 
+连ruby这么慢的语言都能写出快到足够赚大钱的产品，还纠结性能干嘛
+
+http://ibruce.info/
+
+http://us6.campaign-archive2.com/?u=86d6f14c7cc955128485e3b8e&id=1cf40cce91&e=5793911b4e+&utm_content=buffer8daa5&utm_medium=social&utm_source=facebook.com&utm_campaign=buffer
