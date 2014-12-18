@@ -6,6 +6,10 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", project]
 ---
 
+
+
+[10款   Quora上网友推荐的 人工智能和机器学习领域方面的开源项目。](http://www.iteye.com/news/29876)
+
 [如何用JavaScript编写简单的解释器](http://www.labazhou.net/2014/11/how-to-write-a-simple-interpreter-in-javascript/)
 
 [15款值得学习的小型开源项目](http://www.iteye.com/news/29751)
