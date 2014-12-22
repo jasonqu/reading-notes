@@ -6,7 +6,7 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", project]
 ---
 
-
+[OpenSource.com 评出 2014 年十佳开源软件](http://www.iteye.com/news/29961)
 
 [10款   Quora上网友推荐的 人工智能和机器学习领域方面的开源项目。](http://www.iteye.com/news/29876)
 
