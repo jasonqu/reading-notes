@@ -45,15 +45,44 @@ Unlike C-style error codes, the error-handling strategy we use is completely typ
 > Java’s checked exceptions at least force a decision about whether to handle or reraise an error, but they result in significant boilerplate for callers. More importantly, they don’t work for higher-order functions, which can’t possibly be aware of the spe- cific exceptions that could be raised by their arguments. 
 
 ###￼EXERCISE 4.1 P75
+None.map(Some(_)) == None
+
+lookupByName("Joe").map(_.department) // joe's dept if found, None orelse
+lookupByName("Joe").flatMap(_.manager) // Some(manager) if found, None orelse
+
+
 EXERCISE 4.2
 
 A common idiom is to do o.getOrElse(throw new Exception("FAIL")) to con- vert the None case of an Option back to an exception. The general rule of thumb is that we use exceptions only if no reasonable program would ever catch the exception; if for some callers the exception might be a recoverable error, we use Option (or Either, discussed later) to give them flexibility.
+
+As you can see, returning errors as ordinary values can be convenient and the use of higher-order functions lets us achieve the same sort of consolidation of error- handling logic we would get from using exceptions. Note that we don’t have to check for None at each stage of the computation—we can apply several transformations and then check for and handle None when we’re ready. But we also get additional safety, since Option[A] is a different type than A, and the compiler won’t let us forget to explicitly defer or handle the possibility of None.
 
 4.3.2 lifting
 
 lising 4.3 try
 
-EXERCISE 4.3 map2
+EXERCISE 4.3 map2 4.4,4.5 OK 
+
+For-comprehensions is a syntactic construct for lifting
+
+def map2[A,B,C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] =
+  a flatMap (aa =>
+  b map (bb =>
+  f(aa, bb)))
+
+=>
+
+def map2[A,B,C](a: Option[A], b: Option[B])(f: (A, B) => C): Option[C] =
+  for {
+    aa <- a
+    bb <- b
+  } yield f(aa, bb)
+
+Either
+EXERCISE 4.8
+
+
+
 
 
 
