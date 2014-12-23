@@ -1,0 +1,21 @@
+起因：sbt/website
+
+
+网络问题
+
+另外的一个方案，就是使用国内淘宝网提供的RubyGems镜像作为源：
+sudo gem sources -r https://rubygems.org/
+sudo gem sources -a http://ruby.taobao.org/
+
+这下速度就刷刷的了
+
+http://demo.netfoucs.com/huangshaotian/article/details/41378989#
+
+
+Parsing documentation for redcarpet-3.2.2
+unable to convert "\xCA" from ASCII-8BIT to UTF-8 for lib/redcarpet.bundle, skipping
+
+http://stackoverflow.com/questions/4975973/gem-update-unable-to-convert-xe7-to-utf-8-in-conversion-from-ascii-8bit-to-u
+
+not working
+

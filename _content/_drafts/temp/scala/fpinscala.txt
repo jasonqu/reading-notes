@@ -1,0 +1,62 @@
+
+
+###Variadic functions in Scala P55
+The function apply in the object List is a variadic function, meaning it accepts zero or more arguments of type A:
+
+```
+def apply[A](as: A*): List[A] =
+  if (as.isEmpty) Nil
+  else Cons(as.head, apply(as.tail: _*))
+```
+
+### 3.3.2 Improving type inference for higher-order functions P58
+
+```
+def dropWhile[A](l: List[A], f: A => Boolean): List[A]
+val xs: List[Int] = List(1,2,3,4,5)
+val ex1 = dropWhile(xs, (x: Int) => x < 4)
+
+def dropWhile[A](as: List[A])(f: A => Boolean): List[A] =
+val xs: List[Int] = List(1,2,3,4,5) 
+val ex1 = dropWhile(xs)(x => x < 4)
+```
+
+The syntax for calling this version of dropWhile looks like dropWhile(xs)(f). That is, dropWhile(xs) is returning a function, which we then call with the argument f (in other words, dropWhile is curried7). The main reason for grouping the arguments this way is to assist with type inference. 
+
+More generally, when a function definition contains multiple argument groups,
+type information flows from left to right across these argument groups. Here, the first argument group fixes the type parameter A of dropWhile to Int, so the annotation on x => x < 4 is not required.
+
+###￼EXERCISE 3.13 P62
+￼EXERCISE 3.20 EXERCISE 3.24
+EXERCISE 3.29 tree's fold
+
+4.1 The good and bad aspects of exceptions
+
+There are two main problems with exceptions:
+* As we just discussed, exceptions break RT and introduce context dependence, moving us away from the simple reasoning of the substitution model and making it possible to write confusing exception-based code. 
+* Exceptions are not type-safe.
+
+We’d like an alternative to exceptions without these drawbacks, but we don’t want to lose out on the primary benefit of exceptions: they allow us to consolidate and centralize error-handling logic, rather than being forced to distribute this logic throughout our codebase. 
+
+Unlike C-style error codes, the error-handling strategy we use is completely type-safe, and we get full assistance from the type-checker in forcing us to deal with errors, with a minimum of syntactic noise. 
+
+> Checked exceptions
+
+> Java’s checked exceptions at least force a decision about whether to handle or reraise an error, but they result in significant boilerplate for callers. More importantly, they don’t work for higher-order functions, which can’t possibly be aware of the spe- cific exceptions that could be raised by their arguments. 
+
+###￼EXERCISE 4.1 P75
+EXERCISE 4.2
+
+A common idiom is to do o.getOrElse(throw new Exception("FAIL")) to con- vert the None case of an Option back to an exception. The general rule of thumb is that we use exceptions only if no reasonable program would ever catch the exception; if for some callers the exception might be a recoverable error, we use Option (or Either, discussed later) to give them flexibility.
+
+4.3.2 lifting
+
+lising 4.3 try
+
+EXERCISE 4.3 map2
+
+
+
+
+
+
