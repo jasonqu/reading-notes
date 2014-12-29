@@ -82,6 +82,251 @@ Either
 EXERCISE 4.8
 
 
+### 5.1 Strict and non-strict functions
+
+Non-strictness is a property of a function. To say a function is non-strict just means
+that the function may choose not to evaluate one or more of its arguments.
+
+|| && if while
+
+一个例子：
+```
+def if2[A](cond: Boolean, onTrue: () => A, onFalse: () => A): A =
+  if (cond) onTrue() else onFalse()
+if2(a < 22,
+  () => println("a"),
+  () => println("b")
+)
+
+// scala 的语法糖写法
+// Scala takes care of wrapping the expression in a thunk for us
+def if2[A](cond: Boolean, onTrue: => A, onFalse: => A): A =
+  if (cond) onTrue else onFalse
+
+if2(false, sys.error("fail"), 3)
+```
+
+In fact, the type () => A is a syntactic alias for the type Function0[A].
+
+In general, the unevaluated form of an expression is called a thunk, and we can force
+the thunk to evaluate the expression and get a result.
+
+
+Scala
+won’t (by default) cache the result of evaluating an argument:
+
+```
+def maybeTwice(b: Boolean, i: => Int) = if (b) i+i else 0
+
+scala> val x = maybeTwice(true, { println("hi"); 1+41 })
+hi
+hi
+x: Int = 84
+
+// use lazy val to solve this
+def maybeTwice2(b: Boolean, i: => Int) = {
+ lazy val j = i
+ if (b) j+j else 0
+}
+```
+
+A function f is strict if the expression f(x) evaluates to bottom for all x that
+evaluate to bottom.
+
+note : scala的lazy val
+lazy val字段
+就像单例中的延迟初始化
+
+```scala
+class A {
+	lazy val x = {println(true); 3 + 4}
+}
+```
+
+```
+public class A
+{
+  private int x;
+  private volatile boolean bitmap$0;
+  
+  public int x()
+  {
+    return this.bitmap$0 ? this.x : x$lzycompute();
+  }
+  
+  private int x$lzycompute()
+  {
+    synchronized (this)
+    {
+      if (!this.bitmap$0)
+      {
+        Predef..MODULE$.println(BoxesRunTime.boxToBoolean(true));
+        this.x = 7;
+        this.bitmap$0 = true;
+      }
+      return this.x;
+    }
+  }
+}
+```
+
+lazy val局部变量，与字段类似，只是使用方法替换字段
+
+```scala
+class A {
+	def getAddResult(inc: Int) = {
+		lazy val x = {println(true); 3 + 4}
+		x + inc
+	}
+}
+```
+
+```java
+public class A
+{
+  private final int x$1(IntRef x$lzy$1, VolatileByteRef bitmap$0$1)
+  {
+    return (byte)(bitmap$0$1.elem & 0x1) == 0 ?
+      x$lzycompute$1(x$lzy$1, bitmap$0$1) : x$lzy$1.elem;
+  }
+  
+  private final int x$lzycompute$1(IntRef x$lzy$1, VolatileByteRef bitmap$0$1)
+  {
+    synchronized (this)
+    {
+      if ((byte)(bitmap$0$1.elem & 0x1) == 0)
+      {
+        Predef..MODULE$.println(BoxesRunTime.boxToBoolean(true));
+        x$lzy$1.elem = 7;
+        bitmap$0$1.elem = ((byte)(bitmap$0$1.elem | 0x1));
+      }
+      return x$lzy$1.elem;
+    }
+  }
+  
+  public int getAddResult(int inc)
+  {
+    IntRef x$lzy = IntRef.zero();
+    VolatileByteRef bitmap$0 = VolatileByteRef.create((byte)0);
+    return x$1(x$lzy, bitmap$0) + inc;
+  }
+}
+```
+
+IntRef就是int的简单包装， VolatileByteRef是加了volatile的包装
+
+```scala
+package scala.runtime;
+
+public class IntRef implements java.io.Serializable {
+    private static final long serialVersionUID = 1488197132022872888L;
+
+    public int elem;
+    public IntRef(int elem) { this.elem = elem; }
+    public String toString() { return java.lang.Integer.toString(elem); }
+
+    public static IntRef create(int e) { return new IntRef(e); }
+    public static IntRef zero() { return new IntRef(0); }
+}
+
+public class VolatileByteRef implements java.io.Serializable {
+    private static final long serialVersionUID = -100666928446877072L;
+
+    volatile public byte elem;
+    public VolatileByteRef(byte elem) { this.elem = elem; }
+    public String toString() { return java.lang.Byte.toString(elem); }
+
+    public static VolatileByteRef create(byte e) { return new VolatileByteRef(e); }
+    public static VolatileByteRef zero() { return new VolatileByteRef((byte)0); }
+}
+```
+
+对按名参数=> 和无参函数：
+
+```scala
+class A {
+	def getAddResult(a: => Int, b: () => Int) = {
+		a + b()
+	}
+}
+```
+
+效果是一样的
+
+```java
+public class A
+{
+  public int getAddResult(Function0<Object> a, Function0<Object> b)
+  {
+    return a.apply$mcI$sp() + b.apply$mcI$sp();
+  }
+}
+```
+
+```
+case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
+
+A nonempty stream consists of a head and a tail,
+which are both non-strict. Due to technical
+limitations, these are thunks that must be
+explicitly forced, rather than by-name parameters.
+```
+
+是编译器会报错：
+
+```
+[error] E:\Project\IdeaProjects\scala-test\A.scala:15: `val' parameters may not be call-by-name
+[error] case class Cons[+A](h: => A, t: => Stream[A]) extends Stream[A]
+[error]                        ^
+[error] E:\Project\IdeaProjects\scala-test\A.scala:15: `val' parameters may not be call-by-name
+[error] case class Cons[+A](h: => A, t: => Stream[A]) extends Stream[A]
+[error]                                 ^
+[error] two errors found
+[error] (compile:compile) Compilation failed
+[error] Total time: 2 s, completed 2014-12-25 12:58:38
+```
+
+
+
+对lazy求值，使用
+smart constructors, 避免重复求值
+
+Making smart constructors that return the base type is a common trick.
+
+5.3 Separating program description from evaluation
+
+EXERCISE 5.6 声明类型
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

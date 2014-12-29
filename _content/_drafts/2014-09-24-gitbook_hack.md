@@ -8,4 +8,9 @@ http://stackoverflow.com/questions/3292903/in-markdown-what-is-the-best-way-to-l
 [依赖](../chapter9/01_building_akka.md#dependencies)
 
 
+git with proxy
+http://stackoverflow.com/questions/783811/getting-git-to-work-with-a-proxy-server
+
+
+
 
