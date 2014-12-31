@@ -1,0 +1,228 @@
+jdbc
+
+http://www.oracle.com/technetwork/java/overview-141217.html
+
+The JDBC API provides a call-level API for SQL-based database access.
+
+#### JDBC API Overview
+
+The JDBC API makes it possible to do three things:
+
+* Establish a connection with a database or access any tabular data source
+* Send SQL statements
+* Process the results
+
+#### JDBC Architecture
+
+Type 4: Direct-to-Database Pure Java Driver
+This style of driver converts JDBC calls into the network protocol used directly by DBMSs, allowing a direct call from the client machine to the DBMS server and providing a practical solution for intranet access.
+
+#### Key Features
+
+* Full Access to Metadata
+* No Installation
+* Database Connection Identified by URL
+  JDBC technology exploits the advantages of Internet-standard URLs to identify database connections. The JDBC API includes an even better way to identify and connect to a data source, using a DataSource object, that makes code even more portable and easier to maintain.
+  In addition to this important advantage, DataSource objects can provide connection pooling and distributed transactions, essential for enterprise database computing. This functionality is provided transparently to the programmer.
+
+
+
+
+
+
+http://dev.mysql.com/doc/connector-j/en/index.html
+
+#### Chapter 2 Connector/J Versions
+
+Connector/J 5.1 provides ease of development features, including auto-registration with the Driver Manager, standardized validity checks, categorized SQLExceptions, support for the JDBC-4.0 XML processing, per connection client information, NCHAR, NVARCHAR and NCLOB types.
+
+
+http://dev.mysql.com/doc/connector-j/en/connector-j-examples.html
+
+indexes 例子在后面
+
+http://dev.mysql.com/doc/connector-j/en/connector-j-reference.html
+
+5.1 Driver/Datasource Class Names, URL Syntax and Configuration Properties for Connector/J
+
+This now allows per-host overrides of any configuration property for multi-host connections (that is, when using failover, load balancing, or replication). Limit the overrides to user, password, network timeouts and statement and metadata cache sizes; the results of other per-host overrides are not defined.
+
+参数列表
+http://dev.mysql.com/doc/connector-j/en/connector-j-reference-configuration-properties.html
+
+
+5.2 JDBC API Implementation Notes
+
+* Connection
+
+Unlike the pre-Connector/J JDBC driver (MM.MySQL), the isClosed() method does not ping the server to determine if it is available. In accordance with the JDBC specification, it only returns true if closed() has been called on the connection. If you need to determine if the connection is still valid, issue a simple query, such as SELECT 1. The driver will throw an exception if the connection is no longer valid.
+
+* PreparedStatement
+
+PreparedStatements are implemented by the driver, as MySQL does not have a prepared statement feature. Because of this, the driver does not implement getParameterMetaData() or getMetaData() as it would require the driver to have a complete SQL parser in the client.
+
+* ResultSet
+
+By default, ResultSets are completely retrieved and stored in memory. In most cases this is the most efficient way to operate, and due to the design of the MySQL network protocol is easier to implement. If you are working with ResultSets that have a large number of rows or large values, and cannot allocate heap space in your JVM for the memory required, you can tell the driver to stream the results back one row at a time.
+
+To enable this functionality, create a Statement instance in the following manner:
+
+```
+stmt = conn.createStatement(java.sql.ResultSet.TYPE_FORWARD_ONLY,
+              java.sql.ResultSet.CONCUR_READ_ONLY);
+stmt.setFetchSize(Integer.MIN_VALUE);
+```
+
+5.3 Java, JDBC and MySQL Types
+
+The conversions that are always guaranteed to work are listed in the following table.
+略
+
+The ResultSet.getObject() method uses the type conversions between MySQL and Java types, following the JDBC specification where appropriate. The value returned by ResultSetMetaData.GetColumnClassName() is also shown below.
+略
+
+5.4 Using Character Sets and Unicode
+
+All strings sent from the JDBC driver to the server are converted automatically from native Java Unicode form to the client character encoding,
+
+
+Chapter 6 JDBC Concepts
+
+6.1 Connecting to MySQL Using the JDBC DriverManager Interface
+
+When you are using JDBC outside of an application server, the DriverManager class manages the establishment of connections.
+
+DriverManager负责创建连接
+
+
+
+
+6.4 Retrieving AUTO_INCREMENT Column Values through JDBC
+
+At times, it can be tricky to use the SELECT LAST_INSERT_ID() query, as that function's value is scoped to a connection. So, if some other query happens on the same connection, the value is overwritten. On the other hand, the getGeneratedKeys() method is scoped by the Statement instance, so it can be used even if other queries happen on the same connection, but not on the same Statement instance.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+http://dev.mysql.com/downloads/connector/j/
+
+
+
+http://www.cnblogs.com/hongten/archive/2011/03/29/1998311.html
+http://developer.51cto.com/art/200907/137823.htm
+http://zddava.iteye.com/blog/452482
+http://blog.csdn.net/brilliancezhou
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
