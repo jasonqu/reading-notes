@@ -103,96 +103,167 @@ At times, it can be tricky to use the SELECT LAST_INSERT_ID() query, as that fun
 
 
 
+Chapter 7 Connection Pooling with Connector/J
 
+连接池
 
+#### How Connection Pooling Works
 
+Most applications only need a thread to have access to a JDBC connection when they are actively processing a transaction, which often takes only milliseconds to complete. When not processing a transaction, the connection sits idle. Connection pooling enables the idle connection to be used by some other thread to do useful work.
+大多数应用只在处理事务时才使用一个jdbc连接，一般只需要几个毫秒，其他时间就是空闲。连接池允许该连接被其他线程使用，提高效率
 
+简单讲，就是从pool中拿，用完，放回pool中
 
+#### Benefits of Connection Pooling
 
+* Reduced connection creation time. 减少连接创建时间
+* Simplified programming model.
+* Controlled resource usage.
+  If you create a new connection every time a thread needs one, rather than using connection pooling, your application's resource usage can be wasteful and lead to unpredictable behavior under load.
 
+Example 7.1 Connector/J: Using a connection pool with a J2EE application server
 
+```
+InitialContext ctx = new InitialContext();
+DataSource ds =
+          (DataSource)ctx.lookup("java:comp/env/jdbc/MySQLDB");
+conn = ds.getConnection();
 
+            /*
+             * Now, use normal JDBC programming to work with
+             * MySQL, making sure to close each resource when you're
+             * finished with it, which permits the connection pool
+             * resources to be recovered as quickly as possible
+             */
 
+            stmt = conn.createStatement();
+            stmt.execute("SOME SQL QUERY");
 
+            stmt.close();
+            stmt = null;
 
+            conn.close();
+            conn = null;
 
+```
 
+When these objects are closed, they can be re-used; otherwise, they will be stranded, which means that the MySQL server resources they represent (such as buffers, locks, or sockets) are tied up for some time, or in the worst case can be tied up forever.
 
+#### Sizing the Connection Pool
 
+Many of these resources will be used whether or not the connection is actually doing any useful work! Connection pools can be tuned to maximize performance, while keeping resource utilization below the point where your application will start to fail rather than just run slower.
+每个连接都有资源，只要创建，就要占用资源。如果不够，应用会失败而不是缓慢
 
 
+#### Validating Connections
 
+MySQL Connector/J can validate the connection by executing a lightweight ping against a server. In the case of load-balanced connections, this is performed against all active pooled internal connections that are retained.
 
+Depending on your connection pool and configuration, this validation can be carried out at different times:
 
+1. Before the pool returns a connection to the application.
 
+2. When the application returns a connection to the pool.
 
+3. During periodic checks of idle connections.
 
+If your Connector/J deployment uses a connection pool that allows you to specify a validation query, take advantage of it, but ensure that the query starts exactly with /* ping */. This is particularly important if you are using the load-balancing or replication-aware features of Connector/J, as it will help keep alive connections which otherwise will go stale and die, causing problems later.
 
 
+Chapter 8 Multi-Host Connections
 
+Developers should know the following things about multi-host connections that are managed through Connector/J:
 
+* Each multi-host connection is a wrapper of the underlying physical connections.
 
+* Each of the underlying physical connections has its own session. Sessions cannot be tracked, shared, or copied, given the MySQL architecture.
 
+* Every switch between physical connections means a switch between sessions.
 
+* Within a transaction boundary, there are no switches between physical connections. Beyond a transaction boundary, there is no guarantee that a switch does not occur.
 
+> Note
 
+> If an application reuses session-scope data (for example, variables, SSPs) beyond a transaction boundary, failures are possible, as a switch between the physical connections (which is also a switch between sessions) might occur. Therefore, the application should re-prepare the session data and also restart the last transaction in case of an exception, or it should re-prepare session data for each new transaction if it does not want to deal with exception handling.
 
+略
 
 
+Chapter 9 Using the Connector/J Interceptor Classes
 
+An interceptor is a software design pattern that provides a transparent way to extend or modify some aspect of a program
+ With Connector/J, the interceptors are enabled and disabled by updating the connection string to refer to different sets of interceptor classes that you instantiate.
 
+The connection properties that control the interceptors are explained in [Section 5.1, “Driver/Datasource Class Names, URL Syntax and Configuration Properties for Connector/J”]():
 
+* `connectionLifecycleInterceptors`, where you specify the fully qualified names of classes that implement the com.mysql.jdbc.ConnectionLifecycleInterceptor interface. In these kinds of interceptor classes, you might log events such as rollbacks, measure the time between transaction start and end, or count events such as calls to setAutoCommit().
+  log事件，测量transaction开始结束时间，对setAutoCommit()的调用计数等
 
+* `exceptionInterceptors`, where you specify the fully qualified names of classes that implement the com.mysql.jdbc.ExceptionInterceptor interface. In these kinds of interceptor classes, you might add extra diagnostic information to exceptions that can have multiple causes or indicate a problem with server settings. Because exceptionInterceptors classes are only called when handling a SQLException thrown from Connector/J code, they can be used even in production deployments without substantial performance overhead.
+  异常特殊处理
 
+* `statementInterceptors`, where you specify the fully qualified names of classes that implement the com.mysql.jdbc.StatementInterceptorV2 interface. In these kinds of interceptor classes, you might change or augment the processing done by certain kinds of statements, such as automatically checking for queried data in a memcached server, rewriting slow queries, logging information about statement execution, or route requests to remote servers.
 
 
+Chapter 15 Troubleshooting Connector/J Applications
 
+15.4: I have a servlet/application that works fine for a day, and then stops working overnight
 
+MySQL closes connections after 8 hours of inactivity. You either need to use a connection pool that handles stale connections or use the autoReconnect parameter (see Section 5.1, “Driver/Datasource Class Names, URL Syntax and Configuration Properties for Connector/J”).
 
+Example 15.1 Connector/J: Example of transaction with retry logic
 
+        } catch (SQLException sqlEx) {
 
+            //
+            // The two SQL states that are 'retry-able' are 08S01
+            // for a communications error, and 40001 for deadlock.
+            //
+            // Only retry if the error was due to a stale connection,
+            // communications problem or deadlock
+            //
 
+            String sqlState = sqlEx.getSQLState();
 
+            if ("08S01".equals(sqlState) || "40001".equals(sqlState)) {
+                retryCount -= 1;
+            } else {
+                retryCount = 0;
+            }
 
 
+15.12: What should you do if you receive error messages similar to the following: “Communications link failure – Last packet sent to the server was X ms ago”?
 
+Generally speaking, this error suggests that the network connection has been closed. There can be several root causes:
 
+* Firewalls or routers may clamp down on idle connections (the MySQL client/server protocol does not ping).
+* The MySQL Server may be closing idle connections that exceed the wait_timeout or interactive_timeout threshold.
 
+Although network connections can be volatile, the following can be helpful in avoiding problems:
 
+* Ensure connections are valid when used from the connection pool. Use a query that starts with /* ping */ to execute a lightweight ping instead of full query. Note, the syntax of the ping needs to be exactly as specified here.
+* Minimize the duration a connection object is left idle while other application logic is executed.
+* Explicitly validate the connection before using it if the connection has been left idle for an extended period of time.
+* Ensure that wait_timeout and interactive_timeout are set sufficiently high.
+* Ensure that tcpKeepalive is enabled.
+* Ensure that any configurable firewall or router timeout settings allow for the maximum expected connection idle time.
 
+> Note
 
+> Do not expect to be able to reuse a connection without problems, if it has being lying idle for a period. If a connection is to be reused after being idle for any length of time, ensure that you explicitly test it before reusing it.
 
+15.13: Why does Connector/J not reconnect to MySQL and re-issue the statement after a communication failure, instead of throwing an Exception, even though I use the autoReconnect connection string option?
 
+略
 
 
+Chapter 16 Known Issues and Limitations
 
+When Connector/J retrieves timestamps for a daylight saving time (DST) switch day using the getTimeStamp() method on the result set, some of the returned values might be wrong. The errors can be avoided by using the following connection options when connecting to a database:
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        useTimezone=true
+        useLegacyDatetimeCode=false
+        serverTimezone=UTC
 
 
 
@@ -205,20 +276,41 @@ http://dev.mysql.com/downloads/connector/j/
 
 
 
-http://www.cnblogs.com/hongten/archive/2011/03/29/1998311.html
 http://developer.51cto.com/art/200907/137823.htm
-http://zddava.iteye.com/blog/452482
+
+
+http://scau-fly.iteye.com/blog/1985252
+
 http://blog.csdn.net/brilliancezhou
 
 
 
 
+1. 初始化
 
+Class.forName(“com.mysql.jdbc.Driver”);
 
+为了保证调用前已经做好初始化工作，具体做了些什么呢？
 
+public class Driver extends NonRegisteringDriver implements java.sql.Driver {
+    //
+    // Register ourselves with the DriverManager
+    //
+    static {
+        try {
+            java.sql.DriverManager.registerDriver(new Driver());
+        } catch (SQLException E) {
+            throw new RuntimeException("Can't register driver!");
+        }
+    }
+...
+}
 
+注册在DriverManager中
 
+就是把这个Driver放在下面这个list中
 
+private final static CopyOnWriteArrayList<DriverInfo> registeredDrivers = new CopyOnWriteArrayList<>();
 
 
 
