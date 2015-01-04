@@ -286,6 +286,82 @@ http://blog.csdn.net/brilliancezhou
 
 
 
+简单的使用用例
+
+public class JDBCStudy {
+    public static Connection getConnection() throws SQLException,
+            java.lang.ClassNotFoundException {
+        //第一步：加载MySQL的JDBC的驱动
+        Class.forName("com.mysql.jdbc.Driver");
+
+        //取得连接的url,能访问MySQL数据库的用户名,密码；studentinfo：数据库名
+        String url = "jdbc:mysql://localhost:3306/studentinfo";
+        String username = "root";
+        String password = "admin";
+
+        //第二步：创建与MySQL数据库的连接类的实例
+        Connection con = DriverManager.getConnection(url, username, password);
+        return con;
+    }
+
+
+    public static void main(String args[]) {
+        try {
+            //第三步：获取连接类实例con，用con创建Statement对象类实例 sql_statement
+            Connection con = getConnection();
+            Statement sql_statement = con.createStatement();
+
+            /************ 对数据库进行相关操作 ************/
+            //如果同名数据库存在，删除
+            //sql_statement.executeUpdate("drop table if exists student");
+            //执行了一个sql语句生成了一个名为student的表
+            //sql_statement.executeUpdate("create table student (id int not null auto_increment, name varchar(20) not null default 'name', math int not null default 60, primary key (id) ); ");
+            //向表中插入数据
+            //sql_statement.executeUpdate("insert student values(1, 'liying', 98)");
+            //sql_statement.executeUpdate("insert student values(2, 'jiangshan', 88)");
+            //sql_statement.executeUpdate("insert student values(3, 'wangjiawu', 78)");
+            //sql_statement.executeUpdate("insert student values(4, 'duchangfeng', 100)");
+            //---以上操作不实用，但是列出来作为参考---
+
+            //第四步：执行查询，用ResultSet类的对象，返回查询的结果
+            String query = "select * from student";
+            ResultSet result = sql_statement.executeQuery(query);
+            /************ 对数据库进行相关操作 ************/
+
+            System.out.println("Student表中的数据如下:");
+            System.out.println("------------------------");
+            System.out.println("学号" + " " + "姓名" + " " + "数据成绩 ");
+            System.out.println("------------------------");
+
+            //对获得的查询结果进行处理，对Result类的对象进行操作
+            while (result.next()) {
+                int number = result.getInt("id");
+                String name = result.getString("name");
+                String mathScore = result.getString("math");
+                //取得数据库中的数据
+                System.out.println(" " + number + " " + name + " " + mathScore);
+            }
+
+            //关闭连接和声明
+            sql_statement.close();
+            con.close();
+
+        } catch (java.lang.ClassNotFoundException e) {
+            //加载JDBC错误,所要用的驱动没有找到
+            System.err.print("ClassNotFoundException");
+            //其他错误
+            System.err.println(e.getMessage());
+        } catch (SQLException ex) {
+            //显示数据库连接错误或查询错误
+            System.err.println("SQLException: " + ex.getMessage());
+        }
+    }
+}
+
+
+
+
+
 1. 初始化
 
 Class.forName(“com.mysql.jdbc.Driver”);
@@ -306,11 +382,386 @@ public class Driver extends NonRegisteringDriver implements java.sql.Driver {
 ...
 }
 
-注册在DriverManager中
+注册在DriverManager中，why？因为创建连接的时候需要用的是java.sql.DriverManager这个类，而不是mysql自己的类，这样就做到了接口的统一：
 
-就是把这个Driver放在下面这个list中
+Connection con = DriverManager.getConnection(url, username, password);
+
+在DriverManager中所做的就是把这个Driver放在下面一个list中
 
 private final static CopyOnWriteArrayList<DriverInfo> registeredDrivers = new CopyOnWriteArrayList<>();
+
+
+getConnection 核心方法
+
+1. 获取调用者线程的classloader
+
+        ClassLoader callerCL = caller != null ? caller.getClassLoader() : null;
+        if (callerCL == null) {
+            callerCL = Thread.currentThread().getContextClassLoader();
+        }
+
+
+2. 遍历注册的驱动并创建连接
+        for(DriverInfo aDriver : registeredDrivers) {
+            if(isDriverAllowed(aDriver.driver, callerCL)) {
+                Connection con = aDriver.driver.connect(url, info);
+            }
+        }
+
+3. 相当于把方法代理给driver，所以我们回过头来看看Driver，对mysql就是com.mysql.jdbc.NonRegisteringDriver，他也是com.mysql.jdbc.Driver的父类。
+
+其中的逻辑很简单，可以简单的认为像下面这样：
+
+    public java.sql.Connection connect(String url, Properties info) throws SQLException {
+            if (StringUtils.startsWithIgnoreCase(url, LOADBALANCE_URL_PREFIX)) {
+                return connectLoadBalanced(url, info);
+            } else if (StringUtils.startsWithIgnoreCase(url, REPLICATION_URL_PREFIX)) {
+                return connectReplicationConnection(url, info);
+            } else if (!"1".equals(props.getProperty(NUM_HOSTS_PROPERTY_KEY))) {
+            return connectFailover(url, info);
+            } else {
+                Connection newConn = com.mysql.jdbc.ConnectionImpl.getInstance(host(props), port(props), props, database(props), url);
+            }
+    }
+
+
+> NOte
+
+> 细说 NonRegisteringDriver
+> TODO trackConnection connectLoadBalanced connectReplicationConnection connectFailover
+parseURL 就是解析url的方法
+
+
+连接管理。TODO
+
+    protected static void trackConnection(Connection newConn) {
+
+        ConnectionPhantomReference phantomRef = new ConnectionPhantomReference((ConnectionImpl) newConn, refQueue);
+        connectionPhantomRefs.put(phantomRef, phantomRef);
+    }
+
+    protected static final ConcurrentHashMap<ConnectionPhantomReference, ConnectionPhantomReference> connectionPhantomRefs = new ConcurrentHashMap<ConnectionPhantomReference, ConnectionPhantomReference>();
+
+    protected static final ReferenceQueue<ConnectionImpl> refQueue = new ReferenceQueue<ConnectionImpl>();
+
+    static class ConnectionPhantomReference extends PhantomReference<ConnectionImpl> {
+        private NetworkResources io;
+
+        ConnectionPhantomReference(ConnectionImpl connectionImpl, ReferenceQueue<ConnectionImpl> q) {
+            super(connectionImpl, q);
+
+            try {
+                this.io = connectionImpl.getIO().getNetworkResources();
+            } catch (SQLException e) {
+                // if we somehow got here and there's really no i/o, we deal with it later
+            }
+        }
+
+        void cleanup() {
+            if (this.io != null) {
+                try {
+                    this.io.forceClose();
+                } finally {
+                    this.io = null;
+                }
+            }
+        }
+    }
+
+NetworkResources包含以下资源
+class NetworkResources {
+    private final Socket mysqlConnection;
+    private final InputStream mysqlInput;
+    private final OutputStream mysqlOutput;
+    }
+
+    只有一个强制关闭方法forceClose，就是先关闭mysqlInput，再关mysqlOutput，最后关mysqlConnection
+
+其中trackConnection用在ConnectionImpl中用来跟踪连接
+
+
+
+
+Connection解析
+
+核心的代码就在这里，类型树见图
+
+* ConnectionPropertiesImpl 实现了Connections and DataSources的相关配置方法，近5000行
+* ConnectionImpl 实现了连接内容，5500多行
+
+A Connection represents a session with a specific database. Within the context of a Connection, SQL statements are executed and results are returned.
+A Connection's database is able to provide information describing its tables, its supported SQL grammar, its stored procedures, the capabilities of this connection, etc. This information is obtained with the getMetaData method.
+
+一个连接表示到一个指定数据库的一个session，并提供了getMetaData方法来获取数据库的元数据信息。
+
+* JDBC4Connection ConnectionImpl的子类，用于实现jdbc4的接口
+
+
+ConnectionImpl方法解析
+
+
+TODO
+proxy
+    private MySQLConnection proxy = null;
+
+    private InvocationHandler realProxy = null;
+
+统计
+    private long queryTimeCount;
+    private double queryTimeSum;
+    private double queryTimeSumSquares;
+    private double queryTimeMean;
+
+timer
+    private transient Timer cancelTimer;
+
+    private List<Extension> connectionLifecycleInterceptors;
+
+    private static final Constructor<?> JDBC_4_CONNECTION_CTOR;
+
+    private static final int DEFAULT_RESULT_SET_TYPE = ResultSet.TYPE_FORWARD_ONLY;
+
+    private static final int DEFAULT_RESULT_SET_CONCURRENCY = ResultSet.CONCUR_READ_ONLY;
+
+
+使用工厂方法创建连接，分为jdbc3和jdbc4两种支持
+    protected static Connection getInstance(String hostToConnectTo, int portToConnectTo, Properties info, String databaseToConnectTo, String url)
+            throws SQLException {
+        if (!Util.isJdbc4()) {
+            return new ConnectionImpl(hostToConnectTo, portToConnectTo, info, databaseToConnectTo, url);
+        }
+
+        return (Connection) Util.handleNewInstance(JDBC_4_CONNECTION_CTOR, new Object[] { hostToConnectTo, Integer.valueOf(portToConnectTo), info,
+                databaseToConnectTo, url }, null);
+    }
+
+
+    /** Are we in autoCommit mode? */
+    private boolean autoCommit = true;
+
+    /** A cache of SQL to parsed prepared statement parameters. */
+    对每一个Connection有一个cache PerConnectionLRU
+    private CacheAdapter<String, ParseInfo> cachedPreparedStatementParams;
+
+    /**
+     * Holds cached mappings to charset converters to avoid static
+     * synchronization and at the same time save memory (each charset converter
+     * takes approx 65K of static data).
+     */
+    private Map<String, Object> charsetConverterMap = new HashMap<String, Object>(CharsetMapping.getNumberOfCharsetsConfigured());
+
+    /** ID used when profiling */
+    private long connectionId;
+
+统计字段
+
+DatabaseMetaData
+    /** Internal DBMD to use for various database-version specific features */
+    private DatabaseMetaData dbmd = null;
+
+核心
+    /** The I/O abstraction interface (network conn to MySQL server */
+    private transient MysqlIO io = null;
+
+    /** The hostname we're connected to */
+    private String host = null;
+
+    /** Has this connection been closed? */
+    private boolean isClosed = true;
+
+    /** Is the server configured to use lower-case table names only? */
+    private boolean lowerCaseTableNames = false;
+
+    /** The JDBC URL we're using */
+    private String myURL = null;
+
+    /** Does this connection need to be tested? */
+    private boolean needsPing = false;
+
+    private int netBufferLength = 16384;
+
+    private boolean noBackslashEscapes = false;
+
+    /** A map of currently open statements */
+    private Map<Statement, Statement> openStatements;
+
+    private LRUCache parsedCallableStatementCache;
+
+    /** Cache of ResultSet metadata */
+    protected LRUCache resultSetMetadataCache;
+
+    /** The timezone of the server */
+    private TimeZone serverTimezoneTZ = null;
+
+    private List<StatementInterceptorV2> statementInterceptors;
+
+    /**
+     * If a CharsetEncoder is required for escaping. Needed for SJIS and related
+     * problems with \u00A5.
+     */
+    private boolean requiresEscapingEncoder;
+
+
+构造函数就是初始化这些变量
+
+核心代码是
+
+            this.dbmd = getMetaData(false, false);
+            initializeSafeStatementInterceptors();
+            createNewIO(false);
+            unSafeStatementInterceptors();
+
+创建io, return a new MysqlIO instance connected to a server
+
+    public void createNewIO(boolean isForReconnect) throws SQLException {
+        synchronized (getConnectionMutex()) {
+            // Synchronization Not needed for *new* connections, but defintely for connections going through fail-over, since we might get the new connection up
+            // and running *enough* to start sending cached or still-open server-side prepared statements over to the backend before we get a chance to
+            // re-prepare them...
+            为什么sync的原因:fail-over
+
+            Properties mergedProps = exposeAsProperties(this.props);
+
+            if (!getHighAvailability()) {
+                connectOneTryOnly(isForReconnect, mergedProps);
+            } else {
+                connectWithRetries(isForReconnect, mergedProps);
+            }
+        }
+    }
+
+isForReconnect如果是true，表示为重新连接，则在连接后要保留当前类中的一些参数和cache
+
+connectOneTryOnly 与 connectWithRetries的区别在于，前者只进行一次连接，后者要进行多次连接并ping
+
+connectOneTryOnly
+
+            coreConnect(mergedProps);
+            this.connectionId = this.io.getThreadId();
+            this.isClosed = false;
+            // Server properties might be different from previous connection, so initialize again...
+            initializePropsFromServer();
+
+coreConnect 确定protocal后，创建MysqlIO并握手
+        this.io = new MysqlIO(newHost, newPort, mergedProps, getSocketFactoryClassName(), getProxy(), getSocketTimeout(),
+                this.largeRowSizeThreshold.getValueAsInt());
+        this.io.doHandshake(this.user, this.password, this.database);
+
+
+
+
+核心代码，创建statement
+
+PreparedStatement
+首先归一化sql，检查cache中是不是有ParseInfo
+如果没有，创建一个，并加入cache；然后包装并返回
+
+    public java.sql.PreparedStatement clientPrepareStatement(String sql, int resultSetType, int resultSetConcurrency, boolean processEscapeCodesIfNeeded)
+            throws SQLException {
+        checkClosed();
+
+        String nativeSql = processEscapeCodesIfNeeded && getProcessEscapeCodesForPrepStmts() ? nativeSQL(sql) : sql;
+
+        PreparedStatement pStmt = null;
+
+        if (getCachePreparedStatements()) {
+            PreparedStatement.ParseInfo pStmtInfo = this.cachedPreparedStatementParams.get(nativeSql);
+
+            if (pStmtInfo == null) {
+                pStmt = com.mysql.jdbc.PreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql, this.database);
+
+                this.cachedPreparedStatementParams.put(nativeSql, pStmt.getParseInfo());
+            } else {
+                pStmt = new com.mysql.jdbc.PreparedStatement(getLoadBalanceSafeProxy(), nativeSql, this.database, pStmtInfo);
+            }
+        } else {
+            pStmt = com.mysql.jdbc.PreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql, this.database);
+        }
+
+        pStmt.setResultSetType(resultSetType);
+        pStmt.setResultSetConcurrency(resultSetConcurrency);
+
+        return pStmt;
+    }
+
+Statement比较简单
+    public java.sql.Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
+        checkClosed();
+
+        StatementImpl stmt = new StatementImpl(getLoadBalanceSafeProxy(), this.database);
+        stmt.setResultSetType(resultSetType);
+        stmt.setResultSetConcurrency(resultSetConcurrency);
+
+        return stmt;
+    }
+
+
+
+commit
+The method commit() makes all changes made since the previous commit/rollback permanent and releases any database locks currently held by the Connection. This method should only be used when auto-commit has been disabled.
+
+                    execSQL(null, "commit", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+
+
+configureClientCharacterSet
+一个设置charset的方法要300行，也是醉了
+Sets up client character set for MySQL-4.1 and newer if the user This must be done before any further communication with the server!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

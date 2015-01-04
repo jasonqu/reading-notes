@@ -1,0 +1,374 @@
+Java 中的进程与线程
+http://www.ibm.com/developerworks/cn/java/j-lo-processthread/
+介绍了java是怎样封装进程和线程的
+线程的同步
+Java 提供方法 Thread#Join（）来等待一个线程结束，一般情况这就足够了，但一种可能的情况是，需要等待在多个线程上（比如任意一个线程结束或者所有线程结束才会返回），循环调用每个线程的 Join 方法是不可行的，这可能导致很奇怪的同步问题。
+
+http://www.trinea.cn/android/java-android%E7%BA%BF%E7%A8%8B%E6%B1%A0/
+Java(Android)线程池
+new Thread的弊端如下：
+a. 每次new Thread新建对象性能差。
+b. 线程缺乏统一管理，可能无限制新建线程，相互之间竞争，及可能占用过多系统资源导致死机或oom。
+c. 缺乏更多功能，如定时执行、定期执行、线程中断。
+相比new Thread，Java提供的四种线程池的好处在于：
+a. 重用存在的线程，减少对象创建、消亡的开销，性能佳。
+b. 可有效控制最大并发线程数，提高系统资源的使用率，同时避免过多资源竞争，避免堵塞。
+c. 提供定时执行、定期执行、单线程、并发数控制等功能。
+
+http://www.cnblogs.com/jersey/archive/2011/03/30/2000231.html
+Java 线程池学习
+里面有对线程池的详细介绍
+
+http://ifeve.com/
+并发编程网 有很多资料和文章
+
+聊聊并发系列
+http://www.infoq.com/cn/author/%E6%96%B9%E8%85%BE%E9%A3%9E
+
+
+我直接在 Jdk_7u4 的 API 文档中找到了生产者消费者问题的代码样例，使用的是 BlockingQueue 接口实现的。这里有壹個生产者，但是有两個消费者，原理类似，贴出来供你参考。
+class Producer implements Runnable {
+   private final BlockingQueue queue;
+   Producer(BlockingQueue q) { queue = q; }
+   public void run() {
+     try {
+       while (true) { queue.put(produce()); }
+     } catch (InterruptedException ex) { ... handle ...}
+   }
+   Object produce() { ... }
+ }
+
+ class Consumer implements Runnable {
+   private final BlockingQueue queue;
+   Consumer(BlockingQueue q) { queue = q; }
+   public void run() {
+     try {
+       while (true) { consume(queue.take()); }
+     } catch (InterruptedException ex) { ... handle ...}
+   }
+   void consume(Object x) { ... }
+ }
+
+ class Setup {
+   void main() {
+     BlockingQueue q = new SomeQueueImplementation();
+     Producer p = new Producer(q);
+     Consumer c1 = new Consumer(q);
+     Consumer c2 = new Consumer(q);
+     new Thread(p).start();
+     new Thread(c1).start();
+     new Thread(c2).start();
+   }
+ }
+；
+
+Ibatis实现oracle数据库连接池
+http://blog.csdn.net/pretendcool/article/details/7319801
+http://blog.csdn.net/ilibaba/article/details/3996962
+
+主线程等待子线程
+http://blog.csdn.net/xiao__gui/article/details/9213413
+
+http://www.pin5i.com/java/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+http://sourcemaking.com/design_patterns/object_pool
+Object Pool Design Pattern
+Intent
+Object pooling can offer a significant performance boost; it is most effective in situations where the cost of initializing a class instance is high, the rate of instantiation of a class is high, and the number of instantiations in use at any one time is low.
+
+The Factory Method pattern can be used to encapsulate the creation logic for objects. However, it does not manage them after their creation, the object pool pattern keeps track of the objects it creates.
+
+
+一个简单的Object Pool
+// ObjectPool Class
+
+public abstract class ObjectPool<T> {
+  private long expirationTime;
+
+  private Hashtable<T, Long> locked, unlocked;
+
+  public ObjectPool() {
+    expirationTime = 30000; // 30 seconds
+    locked = new Hashtable<T, Long>();
+    unlocked = new Hashtable<T, Long>();
+  }
+
+  protected abstract T create();
+
+  public abstract boolean validate(T o);
+
+  public abstract void expire(T o);
+
+  public synchronized T checkOut() {
+    long now = System.currentTimeMillis();
+    T t;
+    if (unlocked.size() > 0) {
+      Enumeration<T> e = unlocked.keys();
+      while (e.hasMoreElements()) {
+        t = e.nextElement();
+        if ((now - unlocked.get(t)) > expirationTime) {
+          // object has expired
+          unlocked.remove(t);
+          expire(t);
+          t = null;
+        } else {
+          if (validate(t)) {
+            unlocked.remove(t);
+            locked.put(t, now);
+            return (t);
+          } else {
+            // object failed validation
+            unlocked.remove(t);
+            expire(t);
+            t = null;
+          }
+        }
+      }
+    }
+    // no objects available, create a new one
+    t = create();
+    locked.put(t, now);
+    return (t);
+  }
+
+  public synchronized void checkIn(T t) {
+    locked.remove(t);
+    unlocked.put(t, System.currentTimeMillis());
+  }
+}
+
+//The three remaining methods are abstract 
+//and therefore must be implemented by the subclass
+
+public class JDBCConnectionPool extends ObjectPool<Connection> {
+
+  private String dsn, usr, pwd;
+
+  public JDBCConnectionPool(String driver, String dsn, String usr, String pwd) {
+    super();
+    try {
+      Class.forName(driver).newInstance();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    this.dsn = dsn;
+    this.usr = usr;
+    this.pwd = pwd;
+  }
+
+  @Override
+  protected Connection create() {
+    try {
+      return (DriverManager.getConnection(dsn, usr, pwd));
+    } catch (SQLException e) {
+      e.printStackTrace();
+      return (null);
+    }
+  }
+
+  @Override
+  public void expire(Connection o) {
+    try {
+      ((Connection) o).close();
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+  }
+
+  @Override
+  public boolean validate(Connection o) {
+    try {
+      return (!((Connection) o).isClosed());
+    } catch (SQLException e) {
+      e.printStackTrace();
+      return (false);
+    }
+  }
+}
+
+
+02
+JDBCConnectionPool will allow the application to borrow and return database connections:
+
+03
+public class Main {
+  public static void main(String args[]) {
+    // Do something...
+    ...
+
+    // Create the ConnectionPool:
+    JDBCConnectionPool pool = new JDBCConnectionPool(
+      "org.hsqldb.jdbcDriver", "jdbc:hsqldb://localhost/mydb",
+      "sa", "secret");
+
+    // Get a connection:
+    Connection con = pool.checkOut();
+
+    // Use the connection
+    ...
+
+    // Return the connection:
+    pool.checkIn(con);
+ 
+  }
+}
+
+
+http://www.oodesign.com/object-pool-pattern.html
+Why to use it?
+Basically, we'll use an object pool whenever there are several clients who needs the same stateless resource which is expensive to create. 
+
+http://en.wikipedia.org/wiki/Object_pool_pattern
+Pitfalls[edit source]
+
+When writing an object pool, the programmer has to be careful to make sure the state of the objects returned to the pool is reset back to a sensible state for the next use of the object. If this is not observed, the object will often be in some state that was unexpected by the client program and may cause the client program to fail. The pool is responsible for resetting the objects, not the clients. Object pools full of objects with dangerously stale state are sometimes called object cesspools and regarded as an anti-pattern.
+The presence of stale state is not always an issue; it becomes dangerous when the presence of stale state causes the object to behave differently. For example, an object that represents authentication details may break if the "successfully authenticated" flag is not reset before it is passed out, since it will indicate that a user is correctly authenticated (possibly as someone else) when they haven't yet attempted to authenticate. However, it will work just fine if you fail to reset some value only used for debugging, such as the identity of the last authentication server used.
+Inadequate resetting of objects may also cause an information leak. If an object contains confidential data (e.g. a user's credit card numbers) that isn't cleared before the object is passed to a new client, a malicious or buggy client may disclose the data to an unauthorized party.
+If the pool is used by multiple threads, it may need the means to prevent parallel threads from grabbing and trying to reuse the same object in parallel. This is not necessary if the pooled objects are immutable or otherwise thread-safe.
+
+Criticism[edit source]
+
+Some publications do not recommend using object pooling with certain languages, such as Java, especially for objects that only use memory and hold no external resources.[2] Opponents usually say that object allocation is relatively fast in modern languages with garbage collectors; while the operator new needs only ten instructions, the classic new - delete pair found in pooling designs requires hundreds of them as it does more complex work. Also, most garbage collectors scan "live" object references, and not the memory that these objects use for their content. This means that any number of "dead" objects without references can be discarded with little cost. In contrast, keeping a large number of "live" but unused objects increases the duration of garbage collection.[1] In some cases, programs that use garbage collection instead of directly managing memory may run faster.
+
+
+
+
+
+
+
+http://bbs.eduu.com/thread-2496919-1-4.html
+http://atth.eduu.com/forum/201301/07/2320550px3lvfxfzngvnzk.pdf
+http://bj.eduu.com/
+http://bbs.eduu.com/thread-2505859-1-1.html
+http://bbs.eduu.com/thread-2488190-1-12.html
+http://bbs.eduu.com/thread-2478248-1-1.html
+http://bbs.tianya.cn/post-828-70231-2.shtml
+http://blog.sina.com.cn/s/blog_4939472d0100jtp2.html
+http://news.51sxue.com/detail/id_36313.html
+http://magazine.caixin.com/2013-07-05/100551897.html
+http://blog.sina.com.cn/s/blog_4d8e5fa70100hfxn.html
+http://ysx.qhyedu.com/qhy/20130816/9849.html
+http://shuzimaoyan.blog.hexun.com/32276957_d.html
+http://www.fumubang.com/t19917.html
+http://www.fumubang.com/t19897.html
+http://www.cqcdbs.com/bsy/zsxx.htm
+http://blog.renren.com/share/346622074/15721469392
+http://www.jinghua.org/public/article/article_1977.shtml
+http://bbs.eduu.com/thread-1848957-1-1.html
+
+
+http://zhan.renren.com/chihe2011?gid=3674946092074387743&from=PubNewFeed&ref=hotnewsfeed&sfet=3732&fin=5&fid=23892477579&ff_id=671000767&platform=0&expose_time=1381374505&checked=true
+http://read.dangdang.com/content_1050505?ref=read-3-C&book_id=8471
+http://blog.sina.com.cn/pkbj
+http://www.bjshiyi.org.cn/ArticleShow2.aspx?id=4449
+http://www.51edu.com/xiaoshengchu/xuequfang/3406265.html
+http://www.bashu.com.cn/Class.aspx?id=156
+http://bbs.eduu.com/thread-938660-1-6.html
+
+
+http://bbs.eduu.com/thread-2516619-1-1.html
+http://bbs.eduu.com/thread-2517641-1-2.html
+http://bbs.eduu.com/thread-1870871-1-5.html
+http://bbs.eduu.com/thread-2516633-1-2.html
+http://www.youjiao.com/e/20090703/4b8bcc02a1128.shtml
+http://bulo.hujiang.com/menu/11885/item/837220/
+
+
+
+http://v.youku.com/v_show/id_XMzAxMjc2MDky.html
+
+
+
+
+
+
+有没有哪个json库，可以直接把一个case class与一个json字符串之间互转，而不需要手动指定字段名？
+
+你最近研究的argonaut github版本不是已经有生成codec的macro了么。虽然还不完善。没把类名起吊掉
+2014/10/1 11:59:26
+jilen
+2014/10/1 11:59:26
+play/spary/json4s都可以吧
+
+
+
+
+Εvαη
+问个问题，怎么将classTag 和<:组合在一起。。例如 T:classTag<:M
+2014/10/1 23:49:43
+Εvαη
+2014/10/1 23:49:43
+先前问的有点悲剧， 直接 T<:M:ClassTag就好了（Trait A[T<:M:ClassTag]不可以,提示
+traits cannot have type parameters with context bounds `: ...' nor view bounds `<% ...'
+然后，问题应该是说如何获取 trait［A］ 的ClassTag，
+gist:  https://gist.github.com/timzaak/188ea9a6db66284c71f7
+Εvαη
+2014/10/1 23:51:20
+  国庆 都出游了。。
+2014/10/2 14:09:45
+tldeti@proof
+2014/10/2 14:09:45
+context bound需要相关context . trait没有构造函数是无法使用context bound的。你可以试下有构造函数的abstract class
+2014/10/2 15:20:41
+Εvαη
+2014/10/2 15:20:41
+嗯嗯。。gist有了的答案，object  貌似不能继承abstract。。
+2014/10/2 15:39:54
+tldeti@proof
+2014/10/2 15:39:54
+object 当然可以继承abstract class.
+object 不能做到的是有type parameter .
+
+我的答案也不是回答你的问题。而是指出trait 不可能有context bound.那是个错误的问题。然后猜测你可能的问题进而做出一个回答。
+
+
+
+
+
+
+
+https://github.com/scala/ typesafe's scala lint tool
+tldeti@proof
+2014/10/4 17:37:52
+https://github.com/scala/scala-abide
+2014/10/4 18:49:13
+老猪
+2014/10/4 18:49:13
+wartremover的竞争者
+2014/10/4 21:17:56
+老猪
+2014/10/4 21:17:56
+http://proseand.co.nz/2014/03/31/scala-may-not-be-right-for-you-if/
+老猪
+2014/10/4 21:19:32
+不适合scala的人群，其中关于math, haskell和jvm这几条我不同意，其它讲得不错
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
