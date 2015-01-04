@@ -695,6 +695,59 @@ Statement比较简单
         return stmt;
     }
 
+CallableStatement 有一个cache保存了编译过的CallableStatement参数
+public java.sql.CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency)
+
+核心
+cStmt = parseCallableStatement(sql);
+synchronized (cStmt) {
+    cachedParamInfo = cStmt.paramInfo;
+}
+this.parsedCallableStatementCache.put(key, cachedParamInfo);
+
+
+public java.sql.PreparedStatement prepareStatement(String sql) 
+parameters:
+sql - a SQL statement that may contain one or more '?' IN parameter placeholders
+Returns:
+a new PreparedStatement object containing the pre-compiled statement.
+
+A SQL statement with or without IN parameters can be pre-compiled and stored in a PreparedStatement object. This object can then be used to efficiently execute this statement multiple times.
+Note: This method is optimized for handling parametric SQL statements that benefit from precompilation if the driver supports precompilation. In this case, the statement is not sent to the database until the PreparedStatement is executed. This has no direct effect on users; however it does affect which method throws certain java.sql.SQLExceptions
+MySQL does not support precompilation of statements, so they are handled by the driver.
+
+动态sql，？作为占位符，由于服务器不支持statement的预编译，所以是由driver处理的
+
+在一个sync块中，且先检查是不是已经关闭
+        synchronized (getConnectionMutex()) {
+            checkClosed();
+            ...
+        }
+
+首先检查server能不能够支持useServerPreparedStmts
+5.0.7之后，对增删改查和replace的sql是服务器支持的
+
+如果支持，则使用cache：
+
+                       pStmt = (com.mysql.jdbc.ServerPreparedStatement) this.serverSideStatementCache.remove(sql);
+
+                        if (pStmt != null) {
+                            ((com.mysql.jdbc.ServerPreparedStatement) pStmt).setClosed(false);
+                            pStmt.clearParameters();
+                        } else (pStmt == null) {
+                                pStmt = ServerPreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql, this.database, resultSetType, resultSetConcurrency);
+                        }
+
+否则
+
+                        pStmt = ServerPreparedStatement.getInstance(getLoadBalanceSafeProxy(), nativeSql, this.database, resultSetType, resultSetConcurrency);
+
+如果就只不支持server的，则使用客户端的：
+                pStmt = (PreparedStatement) clientPrepareStatement(nativeSql, resultSetType, resultSetConcurrency, false);
+
+
+
+
 
 
 commit
@@ -703,49 +756,72 @@ The method commit() makes all changes made since the previous commit/rollback pe
                     execSQL(null, "commit", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
 
 
+
+realClose相当复杂，需要考虑回滚等情况
+
 configureClientCharacterSet
 一个设置charset的方法要300行，也是醉了
 Sets up client character set for MySQL-4.1 and newer if the user This must be done before any further communication with the server!
 
+execSQL 内部执行sql
+    public ResultSetInternalMethods execSQL(StatementImpl callingStatement, String sql, int maxRows, Buffer packet, int resultSetType,
+            int resultSetConcurrency, boolean streamResults, String catalog, Field[] cachedMetadata, boolean isBatch) throws SQLException {
+
+核心
+return this.io.sqlQueryDirect(callingStatement, sql, encoding, null, maxRows, resultSetType, resultSetConcurrency, streamResults, catalog, cachedMetadata);
+
+
+Get this Connection's current transaction isolation mode.需要使用sql查询
+public int getTransactionIsolation()
+
+initializeDriverProperties本地配置
+initializePropsFromServer server配置 200多行
+
+返回escaped sql
+public String nativeSQL(String sql)
+
+
+public void resetServerState()
+一般在pool中调用
+
+public void rollback()
+The method rollback() drops all changes made since the previous commit/rollback and releases any database locks currently held by the Connection.
+
+除了本地取消所有操作之外，关键还是要执行rollback的sql代码：
+execSQL(null, "rollback", -1, null, DEFAULT_RESULT_SET_TYPE, DEFAULT_RESULT_SET_CONCURRENCY, false, this.database, null, false);
+
+或"ROLLBACK TO SAVEPOINT "对public void rollback(final Savepoint savepoint)
+
+
+setSavepoint()也是要执行SAVEPOINT代码的
+
+
+public void setAutoCommit(final boolean autoCommitFlag)
+If a connection is in auto-commit mode, than all its SQL statements will be executed and committed as individual transactions. Otherwise, its SQL statements are grouped into transactions that are terminated by either commit() or rollback(). By default, new connections are in auto- commit mode. The commit occurs when the statement completes or the next execute occurs, whichever comes first. In the case of statements returning a ResultSet, the statement completes when the last row of the ResultSet has been retrieved or the ResultSet has been closed. In advanced cases, a single statement may return multiple results as well as output parameter values. Here the commit occurs when all results and output param values have been retrieved.
+
+必要时还要执行sql "SET autocommit=?"
+
+
+setTransactionIsolation(int level) 需要执行sql
 
 
 
 
+MysqlIO 与server交互的类
+
+Constructor: Connect to the MySQL server and setup a stream connection.
+核心
+首先创建socket工厂
+this.socketFactory = createSocketFactory();
+然后用该工厂创建连接
+this.mysqlConnection = this.socketFactory.connect(this.host, this.port, props);
+
+然后就可以使用这个socket了
+this.mysqlInput = new BufferedInputStream(this.mysqlConnection.getInputStream(), 16384);
+this.mysqlOutput = new BufferedOutputStream(this.mysqlConnection.getOutputStream(), 16384);
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+socketFactory的一个实现 com.mysql.jdbc.StandardSocketFactory
 
 
 
