@@ -6,6 +6,8 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", web, javascript, css]
 ---
 
+[如何将Java项目发布到Maven中](http://sunspot.blog.51cto.com/372554/1560907)
+
 [推荐在线学习Java的英文资源](http://www.laixintao.com/posts/734)
 
 [关于Java你可能不知道的10件事](http://www.iteye.com/news/29814)

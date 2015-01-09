@@ -6,6 +6,8 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", career]
 ---
 
+[创业之前问问自己，能不能做好这14件事情](http://www.techug.com/14-things-you-better-love-before-becoming-an-entrepreneur)
+
 [技术创始人如何挑选非技术合伙人？](http://www.techug.com/how-to-choose-founder)
 
 [创业公司失败的20大原因 没市场需求排第一](http://www.techug.com/reasons-of-startup-fail)

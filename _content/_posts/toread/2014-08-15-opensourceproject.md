@@ -6,6 +6,10 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", project]
 ---
 
+[Reddit排名算法工作原理](http://www.aqee.net/how-reddit-ranking-algorithms-work/)
+
+[Hacker News 排名算法工作原理](http://www.aqee.net/how-hacker-news-ranking-algorithm-works/)
+
 [OpenSource.com 评出 2014 年十佳开源软件](http://www.iteye.com/news/29961)
 
 [10款   Quora上网友推荐的 人工智能和机器学习领域方面的开源项目。](http://www.iteye.com/news/29876)
