@@ -1,0 +1,1624 @@
+Chap4 类和变量
+P74 单例对象和类名相同时，称为伴生对象(companion object)。和伴生类必须在同一文件中，并能够相互访问私有成员
+
+P74 缓存最好使用weak map(scala.Collection.jcl.WeakHashMap)，这样当内存缺少的时候，垃圾回收就可以回收缓存中的条目了。
+
+P76 fsc 快速scala编译器，可以启动一个后台服务
+工程性的东西，需要其他资料补充
+
+Chap5 基本类型与操作
+P83 多行 在前方加入管道符号来表示调用stripMargin方法
+"""abc       和  """|abc
+   def"""          |def""" 的区别
+
+P83 符号字面量
+字面量会被映射成为scala.Symbol的实例，其典型应用场景是在动态语言中作为一个标识符使用
+  def updateRecordByName(r: Symbol, value: Any) { }
+调用时可以这样写  updateRecordByName('favoriteAlbum, "OK Computer")
+
+P91 任何以“:”结尾的操作符都是传入右操作符的，其余的都是左操作符
+
+Chap6 函数式对象
+P103 6.12 隐式转换 
+如直接使用int * Rational会报错
+scala> 2 * r
+	<console>:7: error: overloaded method value * with
+	alternatives (Double)Double <and> (Float)Float <and>
+	(Long)Long <and> (Int)Int <and> (Char)Int <and> (Short)Int
+	<and> (Byte)Int cannot be applied to (Rational)
+	2 * r
+，所以需要加一个隐式转换
+implicit def intToRational(x: Int) = new Rational(x)
+
+
+chap7 内建控制结构
+for 循环使用
+val filesHere = (new java.io.File(".")).listFiles
+for (file < filesHere if file.getName.endsWith(".scala"))
+  println(file)
+
+for (
+	file <filesHere
+	if file.isFile
+	if file.getName.endsWith(".scala")
+) println(file)
+
+甚至可以再for中一次定义多个变量，也可以结合yield来生成集合。
+
+chap7 内建控制结构
+P114 不要使用finally返回值，有陷阱
+def f(): Int = try { return 1 } finally { return 2 }
+def g(): Int = try { 1 } finally { 2 }
+前者返回2，后者返回1
+
+7.6 no break and continue
+scala中不推荐使用continue或者break，这里有一个例子，最后用到了尾递归【实际编译后不会用到递归的】
+int i = 0; // This is Java
+boolean foundIt = false;
+while (i < args.length) {
+	if (args[i].startsWith("")) {
+		i = i + 1; continue;
+	}
+	if (args[i].endsWith(".scala")) {
+		foundIt = true; break;
+	}
+	i = i + 1;
+}
+
+修改一
+var i = 0
+var foundIt = false
+while (i < args.length && !foundIt) {
+	if (!args(i).startsWith("")) {
+		if (args(i).endsWith(".scala"))
+			foundIt = true
+	}
+	i = i + 1
+}
+
+尾递归 修改二
+def searchFrom(i: Int): Int =
+	if (i >= args.length) 1
+	else if (args(i).startsWith("")) searchFrom(i + 1)
+	else if (args(i).endsWith(".scala")) i
+	else searchFrom(i + 1)
+val i = searchFrom(0)
+
+7.7 变量范围
+可以再内部范围定义与外部范围同名变量：【但是不推荐】
+val a = 1
+val a = 2 // Does not compile
+println(a)
+
+val a = 1;
+{
+	val a = 2 // Compiles just fine 并输出 2 1
+	println(a)
+}
+println(a)
+
+Chap8 函数和闭包
+P126 偏函数
+scala> def sum(a: Int, b: Int, c: Int) = a + b + c
+sum: (a: Int, b: Int, c: Int)Int
+
+scala> sum(1, 2, 3)
+res4: Int = 6
+这里等效于 a.apply(1, 2, 3)
+scala> val a = sum _
+a: (Int, Int, Int) => Int = <function3>
+
+scala> a(1, 2, 3)
+res5: Int = 6
+
+scala> val b = sum(1, _: Int, 3)
+b: Int => Int = <function1>
+
+scala> b(2)
+res6: Int = 6
+
+val a = sum _ 这里必须显示的写下划线，是强类型带来的编译检查
+除非传入的参数是空的函数才可以省略这个下划线 someNumbers.foreach(println)
+
+P128 8.7 闭包
+(x: Int) => x > 0 是一个函数，x是唯一变量。
+如果参考了定义在其他地方的变量呢：(x: Int) => x + more // how much more?
+这里的more是一个自由变量，没有在函数上下文中给出；而x是一个绑定变量，因为在函数上下文中有明确的含义：传入Int参数
+
+如果直接使用这段代码，编译器会报错找不到more的定义
+一旦上下文中定义了一个叫做more的某种东西，这个函数字面量将正常工作：
+var more = "hello"
+val addMore = (x: Int) => x + more
+addMore(12) // return String = 12hello
+
+一旦这个more的赋值发生变化，则addMore的结果也将发生变化。
+直觉上讲，闭包是捕获了变量本身，而不是变量的值；所以闭包也可以改变变量的值。
+
+可以通过函数创建新的闭包
+def makeIncreaser(more: Int) = (x: Int) => x + more
+val inc1 = makeIncreaser(1)
+val inc9999 = makeIncreaser(9999)
+inc1(10) // return 11
+inc9999(10) // return 10009
+
+P130 8.8 重复参数
+def echo(args: String*) = for (arg <args) println(arg)
+他可以这样调用
+echo("hello", "world!")
+如果是Array，则可以使用展开操作符
+val arr = Array("What's", "up", "doc?")
+echo(arr: _*)
+
+P131 8.9 尾递归 略
+
+Chap9 控制抽象
+P136 使用闭包简化代码
+object FileMatcher {
+	private def filesHere = (new java.io.File(".")).listFiles
+	private def filesMatching(matcher: String => Boolean) =
+		for (file <filesHere;
+			if matcher(file.getName))
+	yield file
+	def filesEnding(query: String) = filesMatching(_.endsWith(query))
+	def filesContaining(query: String) = filesMatching(_.contains(query))
+	def filesRegex(query: String) = filesMatching(_.matches(query))
+}
+
+P139 9.3 柯里化 currying
+使用函数式变成技巧，创建新的感觉上是原生语言支持的控制抽象
+首先是一个非柯里化的规整的加法函数
+def plainOldSum(x: Int, y: Int) = x + y
+plainOldSum(1, 2)
+
+然后我们柯里化该函数：
+def curriedSum(x: Int)(y: Int) = x + y
+curriedSum(1)(2)
+
+这里发生的事情是调用curriedSum(1)(2)，实际上接连调用了两个传统函数：
+def first(x: Int) = (y: Int) => x + y
+val second = first(1)
+second(2)
+
+上面是一个演示，实际可以使用部分应用函数表达式的方式，把占位符标注应用在curriedSum中
+val twoPlus = curriedSum(2)_
+
+
+Chap10 组合与继承
+P145 几个问题
+以连接符的方式思考问题通常是实现库设计的好方法：可以让你只考虑以基本的方式在应用领域中构建对象即可。
+什么是简单对象？用什么方式让跟有趣的对象通过简单对象构造出来？连接符是怎样结合在一起的？
+什么是最通用的组合？能满足有趣的规律吗？如果对这些问题都有好的回答，那你的库设计就步入正轨了。
+Thinking in terms of combinators is generally a good way to approach
+library design: it pays to think about the fundamental ways to construct objects
+in an application domain. What are the simple objects? In what ways
+can more interesting objects be constructed out of simpler ones? How do
+combinators hang together? What are the most general combinations? Do
+they satisfy any interesting laws? If you have good answers to these questions,
+your library design is on track.
+
+P150 10.6 参数化字段
+class ArrayElement(val contents: Array[String]) extends Element
+
+class Cat {val dangerous = false}
+class Tiger (override val dangerous: Boolean, private var age: Int ) extends Cat
+
+P154 10.9 多态与动态绑定
+动态绑定（dynamically bound）就是被调用的实际方法实现取决于运行期度一项基于的类，而不是变脸或者表达式的类型。
+
+P157 zip操作可以是两个数组变成一个二元对的数组。
+Array(1, 2, 3) zip Array("a", "b")
+will evaluate to:
+Array((1, "a"), (2, "b"))
+
+P158 10.13 定义工厂对象
+使用私有类和单例 参见chap10下的scala类
+
+
+Chap11 Scala的层次
+P164 结构图
+Any是所有类的超类，定义了如下方法：
+final def ==(that: Any): Boolean
+final def !=(that: Any): Boolean
+def equals(that: Any): Boolean
+def ##: Int
+def hashCode: Int
+def toString: String
+
+## 等同于 hashCode
+
+Any有两个子类： AnyVal[内建值类型 Int Long Unit etc] 和 AnyRef[引用类Object别名]
+
+Null 是具有类型的null，不能被赋值给其他类型
+
+Nothing在scala的最低端，是任何类型的子类型，但是却没有任何值，用处是标明不正常的返回。
+例如标准库Predef中有一个error方法：
+def error(message: String): Nothing = throw new RuntimeException(message)
+因为Nothing是其他类型的子类型，所以可以非常灵活的使用error方法：[这里Nothing被当成Int处理了]
+def divide(x: Int, y: Int): Int =
+	if (y != 0) x / y
+	else error("can't divide by zero")
+
+Chap12 特质
+特质不仅仅是带有具体方法的java接口，他还可以声明字段、维持状态值，它实际上可以做类做的所有事，除了以下两点：
+1. 特质不能拥有类参数，即constructor参数
+trait NoPoint(x: Int, y: Int) // Does not compile
+2. 不论在类的哪一个角落，super的调用是静态绑定的；而在特质中，super的调用是动态绑定的
+如果再类中写super.toString 则很明确调用哪一个实现
+然而如果在特质中写了同样的代码，则定义时super调用的方法实现还没有定义。
+调用的实现健在每一次特质被混入到具体类的时候才被决定。
+
+P172 12.3 样例 长方形 见chap12.rect
+
+P173 Ordered 特质
+使用这个特质可以只写一个方法就完成 < > <= >= 的定义[注：还需要自己定义equals]，如之前的有理数类：
+class Rational(n: Int, d: Int) extends Ordered[Rational] {
+def compare(that: Rational) =
+  (this.numer * that.denom) - (that.numer * this.denom)
+}
+
+trait可以定义super的调用，混入多个特质的时候，特质是从右向左起作用的
+val queue = (new BasicIntQueue with Filtering with Incrementing)
+
+线性化
+class Animal
+trait Furry extends Animal
+trait HasLegs extends Animal
+trait FourLegged extends HasLegs
+class Cat extends Animal with Furry with FourLegged
+
+线性化的结果是这样的：
+Animal AnyRef Any
+Furry Animal
+FourLegged HasLegs Furry Animal
+Cat FourLegged HasLegs Furry Animal
+
+Chap13 包和引用
+P187 Scala的灵活引用与java相比有三点差异：
+1. 可以出现在任何地方
+2. 可以指的是（单例或者正统的）对象及包
+3. 可以重命名和隐藏一些被引用的成员
+例如这个引用就是重命名了Apple，隐藏了Pear
+import Fruits.{Apple => McIntosh, Pear => _, _}
+
+Chap15 样本类和模式匹配
+P204一个简单例子
+def simplifyTop(expr: Expr): Expr = expr match {
+	case UnOp("-", UnOp("-", e))  => e // Double negation
+	case BinOp("+", e, Number(0)) => e // Adding zero
+	case BinOp("*", e, Number(1)) => e // Multiplying by one
+	case _ => expr
+}
+
+P206 模式种类
+- 通配模式  case _ 为默认全匹配(catch all)选项
+- 常量模式
+- 变量模式 [小写字母开头会被认为是变量模式，可以使用反引号`pi`来标识常量模式]
+- 构造器模式 如前面的case BinOp("*", e, Number(1)) => e
+- 序列模式 
+case List(0, _, _) => println("found it") 匹配0开头的size为3的List
+case List(0, _*) => println("found it")   匹配0开头的不限长的List
+- 元组模式 case (a, b, c) => println("matched "+ a + b + c)
+- 类型模式 case s: String => s.length
+但是注意对Collection存在类型擦出，只有Array例外：
+def isIntIntMap(x: Any) = x match {
+	case m: Map[Int, Int] => true
+	case _ => false
+}
+无效 isIntIntMap(Map("abc" > "abc")) 也会返回true 
+def isStringArray(x: Any) = x match {
+	case a: Array[String] => "yes"
+	case _ => "no"
+}
+有效
+
+- 变量绑定
+下面是两次绝对值消重的处理，返回的e是在模式中定义的
+expr match {
+	case UnOp("abs", e @ UnOp("abs", _)) => e
+	case _ =>
+}
+
+P212 15.3 模式守卫
+目标： x + x = 2 * x
+BinOp("+", Var("x"), Var("x")) to BinOp("*", Var("x"), Number(2))
+直接使用两个变量名将会报错，所以使用下面的方法：
+def simplifyAdd(e: Expr) = e match {
+	case BinOp("+", x, y) if x == y =>
+	BinOp("*", x, Number(2))
+	case _ => e
+}
+其他例子：
+case n: Int if 0 < n => ...          // 匹配正数
+case s: String if s(0) == 'a' => ... // 匹配a大头的字符串
+
+P214 15.5 封闭类
+用来使用编译时检查匹配的覆盖率
+sealed abstract class Expr
+case class Var(name: String) extends Expr
+case class Number(num: Double) extends Expr
+case class UnOp(operator: String, arg: Expr) extends Expr
+case class BinOp(operator: String, left: Expr, right: Expr) extends Expr
+
+定义了sealed后，下面的方法会有编译警告
+def describe(e: Expr): String = e match {
+	case Number(_) => "a number"
+	case Var(_) => "a variable"
+}
+
+P215 15.6 Option
+scala> val capitals = Map("France" > "Paris", "Japan" > "Tokyo")
+scala> capitals get "France"
+res23: Option[java.lang.String] = Some(Paris)
+scala> capitals get "North Pole"
+res24: Option[java.lang.String] = None
+
+def show(x: Option[String]) = x match {
+	case Some(s) => s
+	case None => "?"
+}
+scala> show(capitals get "France")
+res26: String = Paris
+scala> show(capitals get "North Pole")
+res27: String = ?
+
+P216 15.7 模式的应用
+- 模式在变量定义中
+scala> val myTuple = (123, "abc")
+myTuple: (Int, java.lang.String) = (123,abc)
+scala> val (number, string) = myTuple
+number: Int = 123
+string: java.lang.String = abc
+
+scala> val exp = new BinOp("*", Number(5), Number(1))
+exp: BinOp = BinOp(*,Number(5.0),Number(1.0))
+scala> val BinOp(op, left, right) = exp
+op: String = *
+left: Expr = Number(5.0)
+right: Expr = Number(1.0)
+
+- 用作偏函数的样本序列 TODO不太明白
+- for中的模式
+
+更大的例子见chap15的代码
+
+Chap16 使用列表
+Scala列表时协变的(covariant)，即对S T来说，如果S是T的子类型，则List[S] 是List[T] 的子类型
+空列表类型是List[Nothing]，所以这样的代码是合法的 val xs: List[String] = List()
+
+列表的方法主要是 head tail isEmpty 实现插入排序
+def isort(xs: List[Int]): List[Int] =
+	if (xs.isEmpty) Nil
+	else insert(xs.head, isort(xs.tail))
+def insert(x: Int, xs: List[Int]): List[Int] =
+	if (xs.isEmpty || x <= xs.head) x :: xs
+	else xs.head :: insert(x, xs.tail)
+
+P227 列表模式
+val List(a, b, c) = fruit
+val a :: b :: rest = fruit
+
+重写插入排序
+def isort(xs: List[Int]): List[Int] = xs match {
+	case List() => List()
+	case x :: xs1 => insert(x, isort(xs1))
+}
+def insert(x: Int, xs: List[Int]): List[Int] = xs match {
+	case List() => List(x)
+	case y :: ys => if (x <= y) x :: xs
+					else y :: insert(x, ys)
+}
+
+P228 16.6 List一阶方法
+- 连接列表 :::
+- 分治原则：用模式匹配自己实现append，类似一个填空
+def append[T](xs: List[T], ys: List[T]): List[T] =
+	xs match {
+		case List() => // ??
+		case x :: xs1 => // ??
+	}
+结果是：
+def append[T](xs: List[T], ys: List[T]): List[T] =
+	xs match {
+		case List() => ys
+		case x :: xs1 => x :: append(xs1, ys)
+	}
+
+- length 这个时间是线性的，需要判断空就是用isEmpty，而不要使用length == 0
+- init last 线性的
+- reverse 不能用这种实现 效率O(n*n)
+def rev[T](xs: List[T]): List[T] = xs match {
+	case List() => xs
+	case x :: xs1 => rev(xs1) ::: List(x)
+}
+- drop take 泛化了 tail init，可以返回列表任意长度的前缀 后缀
+xs take n 返回列表前n个元素，如果n>length 返回整个列表
+xs drop n 返回列表后n个元素，如果n>length 返回空列表
+xs splitAt n <==> (xs take n, xs drop n)
+
+- apply 如 abcde(2) 在Scala中罕见 
+xs apply n <==> (xs drop n).head
+indices 返回有效索引值的列表
+
+- zip 把两列表变成一个对偶列表，长度不一致，则取少的长度
+xs zipWithIndex <==> xs zip xs.indices
+
+- toString mkString
+xs mkString sep <==> xs mkString ("", sep, "")
+addString 会增加一个StringBuilder参数，来提高效率
+
+- elements toArray copyToArray(arr, start)
+Array 也有方法toList
+
+P235 归并排序 略
+def msort[T](less: (T, T) => Boolean)
+		(xs: List[T]): List[T] = {
+	def merge(xs: List[T], ys: List[T]): List[T] =
+		(xs, ys) match {
+		case (Nil, _) => ys
+		case (_, Nil) => xs
+		case (x :: xs1, y :: ys1) =>
+			if (less(x, y)) x :: merge(xs1, ys)
+			else y :: merge(xs, ys1)
+	}
+	val n = xs.length / 2
+	if (n == 0) xs
+	else {
+		val (ys, zs) = xs splitAt n
+		merge(msort(less)(ys), msort(less)(zs))
+	}
+}
+在这个基础上可以定义升降序的排序
+val intSort = msort((x: Int, y: Int) => x < y) _
+val reverseIntSort = msort((x: Int, y: Int) => x > y) _
+
+P236 16.7 List高阶方法
+- 列表间映射 map flatmap foreach
+List(1, 2, 3) map (_ + 1)
+scala> val words = List("the", "quick", "brown", "fox")
+words: List[java.lang.String] = List(the, quick, brown, fox)
+scala> words map (_.length)
+res33: List[Int] = List(3, 5, 5, 3)
+scala> words map (_.toList.reverse.mkString)
+res34: List[String] = List(eht, kciuq, nworb, xof)
+
+scala> words map (_.toList)
+res35: List[List[Char]] = List(List(t, h, e), List(q, u, i, c, k), List(b, r, o, w, n), List(f, o, x))
+scala> words flatMap (_.toList)
+res36: List[Char] = List(t, h, e, q, u, i, c, k, b, r, o, w, n, f, o, x)
+
+构建 1 <= j < i < 5 的(i, j)对偶
+scala> List.range(1, 5) flatMap ( i => List.range(1, i) map (j => (i, j)) )
+res37: List[(Int, Int)] = List((2,1), (3,1), (3,2), (4,1), (4,2), (4,3))
+
+当然是用for 也可以 for (i <- List.range(1, 5); j <- List.range(1, i)) yield (i, j)
+
+foreach的结果是Unit，只是将每一个列表元素都调用一遍过程
+scala> var sum = 0
+scala> List(1, 2, 3, 4, 5) foreach (sum += _)
+scala> sum
+res39: Int = 15
+
+- 列表过滤 filter partition find takeWhile dropWhile span
+List(1, 2, 3, 4, 5) filter (_ % 2 == 0)
+words filter (_.length == 3)
+
+xs partition p <==> (xs filter p, xs filter (!p(_)))
+xs find p      <==> (xs filter p).head
+
+scala> List(1, 2, 3, -4, 5) takeWhile (_ > 0)
+res45: List[Int] = List(1, 2, 3)
+scala> words dropWhile (_ startsWith "t")
+res46: List[java.lang.String] = List(quick, brown, fox)
+
+xs span p <==> (xs takeWhile p, xs dropWhile p)
+scala> List(1, 2, 3, -4, 5) span (_ > 0)
+res47: (List[Int], List[Int]) = (List(1, 2, 3),List(-4, 5))
+
+- 列表论断 forall exists
+- 列表折叠 /: :\  foldLeft foldRight
+sum(List(a, b, c)) equals 0 + a + b + c 可以这样定义
+scala> def sum(xs: List[Int]): Int = (0 /: xs) (_ + _)
+
+product(List(a, b, c)) equals 1 * a * b * c
+scala> def product(xs: List[Int]): Int = (1 /: xs) (_ * _)
+
+左折叠操作“(z /: xs) (op)”与三个对象有关 ： 初始值z 列表xs 二元操作符op
+(z /: List(a, b, c)) (op) equals op(op(op(z, a), b), c)
+
+如空格连接列表
+("" /: words) (_ +" "+ _)
+但是开头会多一个空格，所以可以这样
+(words.head /: words.tail) (_ +" "+ _)
+
+现在实现一个高效的线性时间的列表反转
+填空题：
+def reverseLeft[T](xs: List[T]) = (startvalue /: xs)(operation)
+
+推导过程
+List()              equals (by the properties of reverseLeft)
+reverseLeft(List()) equals (by the template for reverseLeft)
+(startvalue /: List())(operation) equals (by the definition of /:) startvalue
+
+List(x)              equals (by the properties of reverseLeft)
+reverseLeft(List(x)) equals (by the template for reverseLeft, with startvalue = List())
+(List() /: List(x)) (operation) equals (by the definition of /:) operation(List(), x)
+
+推导出正确的结果
+def reverseLeft[T](xs: List[T]) = (List[T]() /: xs) {(ys, y) => y :: ys}
+
+- 排序 sort 用的也是，msort，不过是定义在List内的
+scala> List(1, -3, 4, 2, 6) sortWith (_ < _)
+scala> words sortWith (_.length > _.length)
+
+P242 List伴生对象的方法
+- 通过元素创建列表 List.apply List(1,2,3)
+- 创建数值范围  List.range
+scala> List.range(1, 5)
+res54: List[Int] = List(1, 2, 3, 4)
+scala> List.range(1, 9, 2)
+res55: List[Int] = List(1, 3, 5, 7)
+scala> List.range(9, 1, -3)
+res56: List[Int] = List(9, 6, 3)
+- 创建同一列表 List.make
+- 解除啮合 List.unzip
+- 连接 flatten concat
+- 对配对列表进行操作 map2 forall2 exist2
+
+P244 16.9 了解scala的类型推断算法 TODO 
+
+Chap17 集合类型
+Iterable指代可以被枚举的集合类型；Iterator用来实行遍历操作，而且只能被使用一次
+
+trait Seq : 
+List Array
+scala.collection.mutable. ListBuffer ArrayBuffer 
+scala.collection.mutable.Queue scala.collection.immutable.Queue
+scala.collection.mutable.Stack scala.collection.immutable.Stack
+RichString
+
+Set Map 默认都是不可变的
+object Predef {
+	type Map[A, B] = collection.immutable.Map[A, B]
+	type Set[A] = collection.immutable.Set[A]
+	val Map = collection.immutable.Map
+	val Set = collection.immutable.Set
+	// ...
+}
+如果同一文件要同时用到可变和不可变的版本，可以这样：
+scala> import scala.collection.mutable
+scala> val mutaSet = mutable.Set(1, 2, 3)
+
+在少于5个元素的时候，scala.collection.immutable.Set() 方法返回的是优化的集合类型
+
+scala.collection.immutable.TreeSet TreeMap
+
+scala.collection.mutable.SynchronizedSet SynchronizedMap
+new HashMap[Int, String] with SynchronizedMap[Int, String]
+
+初始化TreeSet from List 一般转换也用Set.empty 或Map.empty ++的方式
+val colors = List("blue", "yellow", "red", "green")
+val treeSet = TreeSet(colors) // error
+val treeSet = TreeSet[String]() ++ colors
+
+相互转换 toList toArray 因为需要复制，所以速度会比较慢
+
+元组 获取最长单词及其索引
+def longestWord(words: Array[String]) = {
+	var word = words(0)
+	var idx = 0
+	for (i <1 until words.length)
+		if (words(i).length > word.length) {
+			word = words(i)
+			idx = i
+		}
+	(word, idx)
+}
+
+
+Chap 19 类型参数化
+通过纯函数式的Queue 来演示 Chap 13介绍的信息掩藏技术，因为信息隐藏可以用来获得更为通用的类型参数化的变化型注解
+
+P281 19.1 函数式Queue
+A functional queue's specification
+有三个操作 head tail enqueue
+scala> val q = Queue(1, 2, 3)
+q: Queue[Int] = Queue(1, 2, 3)
+scala> val q1 = q enqueue 4
+q1: Queue[Int] = Queue(1, 2, 3, 4)
+scala> q
+res0: Queue[Int] = Queue(1, 2, 3)
+
+一个简单的实现是使用List来创建：
+class SlowAppendQueue[T](elems: List[T]) { // Not efficient
+	def head = elems.head
+	def tail = new SlowAppendQueue(elems.tail)
+	def enqueue(x: T) = new SlowAppendQueue(elems ::: List(x))
+}
+该实现的问题在于enqueue的时间是线性的，不是常量的
+如果倒过来的话，enqueue是常量的，但是head和tail又不是了
+class SlowHeadQueue[T](smele: List[T]) { // Not efficient
+	// smele is elems reversed
+	def head = smele.last
+	def tail = new SlowHeadQueue(smele.init)
+	def enqueue(x: T) = new SlowHeadQueue(x :: smele)
+}
+
+所以我们考虑同时维护一个正向的和一个反向的列表来实现接近常数时间的方案
+队列在任意时间的所有内容都可以表达为 leading ::: trailing.reverse
+所以enqueue的时候只在trailing中增加元素，leading为空白
+直到第一次使用head或tail的时候将trailing反转复制给leading即可，称这个操作为mirror
+class Queue[T](
+	private val leading: List[T],
+	private val trailing: List[T]
+) {
+	private def mirror =
+		if (leading.isEmpty)
+			new Queue(trailing.reverse, Nil)
+		else
+			this
+	def head = mirror.leading.head
+	def tail = {
+		val q = mirror
+		new Queue(q.leading.tail, q.trailing)
+	}
+	def enqueue(x: T) =
+		new Queue(leading, x :: trailing)
+}
+
+P283 19.2 信息隐藏
+你仍会质疑，这种效率是以暴露实现细节为代价的
+Queue的构造器有两个列表作为参数，而且一个还是反序的，所以需要一些隐藏，这里有几种方法：
+
+- 私有构造器及工厂方法
+将主构造器声明为私有后，间需要辅助构造器
+class Queue[T] private (
+	private val leading: List[T],
+	private val trailing: List[T]
+)
+def this() = this(Nil, Nil)
+def this(elems: T*) = this(elems.toList, Nil)
+
+还可以使用伴生对象的工厂方法
+object Queue {
+	// constructs a queue with initial elements ‘xs’
+	def apply[T](xs: T*) = new Queue[T](xs.toList, Nil)
+}
+
+- 私有类
+将类隐藏，仅提供公共接口
+trait Queue[T] {
+	def head: T
+	def tail: Queue[T]
+	def enqueue(x: T): Queue[T]
+}
+object Queue {
+	def apply[T](xs: T*): Queue[T] =
+		new QueueImpl[T](xs.toList, Nil)
+	private class QueueImpl[T](
+		private val leading: List[T],
+		private val trailing: List[T]
+		) extends Queue[T] {
+		def mirror =
+			if (leading.isEmpty)
+				new QueueImpl(trailing.reverse, Nil)
+			else
+				this
+		def head: T = mirror.leading.head
+		def tail: QueueImpl[T] = {
+				val q = mirror
+				new QueueImpl(q.leading.tail, q.trailing)
+		}
+		def enqueue(x: T) =
+			new QueueImpl(leading, x :: trailing)
+	}
+}
+
+19.3 变化型注解
+使用特制的凡是将不能直接使用Queue 而必须使用参数化类型，如Queue[String], Queue[AnyRef]
+scala提供了保持协变 covariant 和非协变 nonvariant 以及逆变 contravatiant 的语法
+trait Queue[+T] { 协变
+trait Queue[-T] { 逆变
+
+使用这样的方式会对类型系统带来不可预知的状态：
+如java这样是可行的，会抛出运行时异常：
+String[] a1 = { "abc" };
+Object[] a2 = a1;
+a2[0] = new Integer(17);
+String s = a1[0];
+
+但是scala则在编译时抛出异常，因为scala的Array是非协变的
+scala> val a1 = Array("abc")
+scala> val a2: Array[Any] = a1
+
+但是如果你确实要这么做的时候，可以强制转换
+val a2: Array[Object] = a1.asInstanceOf[Array[Object]]
+
+19.4 检查 P288 略
+
+19.5 下界 P290
+泛化enqueue方法
+class Queue[+T] (private val leading: List[T],
+		private val trailing: List[T] ) {
+	def enqueue[U >: T](x: U) =
+		new Queue[U](leading, x :: trailing) // ...
+}
+这样讲Apple加入Queue[Orange]中，返回的结果是Queue[Fruit]
+
+19.6 逆变
+李氏替换原则 如果能在需要U的地方替换成T的值，则T是U的子类型的假设就是安全的
+如输出管道
+trait OutputChannel[-T] {
+	def write(x: T)
+}
+可以用OutputChannel[AnyRef]替换OutputChannel[String]，但不能反过来
+
+有时协变逆变会同时出现，如scala的函数特质
+如在编写A=>B的时候，scala会把它扩展为Function1[A,B]，这里满足李氏原则，因为参数是需求，结果是提供
+trait Function1[-S, +T] {
+	def apply(x: S): T
+}
+
+如下面的例子
+class Publication(val title: String)
+class Book(title: String) extends Publication(title)
+object Library {
+	val books: Set[Book] =
+	Set(
+		new Book("Programming in Scala"),
+		new Book("Walden")
+	)
+	def printBookList(info: Book => AnyRef) {
+		for (book <- books) println(info(book))
+	}
+}
+object Customer extends Application {
+	def getTitle(p: Publication): String = p.title
+	Library.printBookList(getTitle)
+}
+
+19.7 对象私有数据
+目前Queue还有问题，如果head被不停调用，那么mirror操作会被重复调用，我们使用可重新赋值的字段来优化一下
+class Queue[+T] private (
+	private[this] var leading: List[T],
+	private[this] var trailing: List[T]
+) {
+	private def mirror() =
+		if (leading.isEmpty) {
+			while (!trailing.isEmpty) {
+				leading = trailing.head :: leading
+				trailing = trailing.tail
+			}
+		}
+	def head: T = {
+		mirror()
+		leading.head
+	}
+	def tail: Queue[T] = {
+		mirror()
+		new Queue(leading.tail, trailing)
+	}
+	def enqueue[U >: T](x: U) =
+		new Queue[U](leading, x :: trailing)
+}
+
+19.8 上界
+如将Ordered混入Person中就可以使用sort方法排序了
+def orderedMergeSort[T <: Ordered[T]](xs: List[T]): List[T] = {
+	def merge(xs: List[T], ys: List[T]): List[T] =
+		(xs, ys) match {
+			case (Nil, _) => ys
+			case (_, Nil) => xs
+			case (x :: xs1, y :: ys1) =>
+				if (x < y) x :: merge(xs1, ys)
+				else y :: merge(xs, ys1)
+		}
+	val n = xs.length / 2
+	if (n == 0) xs
+	else {
+		val (ys, zs) = xs splitAt n
+		merge(orderedMergeSort(ys), orderedMergeSort(zs))
+	}
+}
+但是不能用来排序Int，因为Int不是Ordered[Int]的子类型，在21.6 将来介绍如何使用隐式参数及约束查看获得更通用的方案
+
+
+Chap20 抽象成员
+本章将描述四种抽闲成员 val var 方法 类型
+trait Abstract {           以及对应实现    class Concrete extends Abstract {
+	type T                   				type T = String
+	def transform(x: T): T      			def transform(x: String) = x + x
+	val initial: T              			val initial = "hi"
+	var current: T              			var current = initial
+}                               		}
+
+在上面T是抽象类型，他永远是某个类或者trait的成员
+可以把Concrete中的T想象是为类定义新的名称/别名的方式，如String，此时所有的T都是String
+
+20.5 初始化 val
+trait RationalTrait {
+	val numerArg: Int
+	val denomArg: Int
+}
+实例化它需要这样写：
+new RationalTrait {
+	val numerArg = 1
+	val denomArg = 2
+}
+对 new Rational(expr1, expr2) 会在初始化之前计算
+
+new RationalTrait {
+	val numerArg = expr1
+	val denomArg = expr2
+}
+但是对Trait是按照匿名类初始化的一部分，而这个初始化是在Trait之后，所以此时两个参数都见识默认的0
+如果trait中定义了使用这两个参数的方法，将会出错，如
+trait RationalTrait {
+	val numerArg: Int
+	val denomArg: Int
+	require(denomArg != 0)
+}
+这样写将会在require处报错
+new RationalTrait {
+	val numerArg = 1 * x
+	val denomArg = 2 * x
+}
+
+解决这个问题有两种方案：
+- 预初始换字段
+new {
+	val numerArg = 1 * x
+	val denomArg = 2 * x
+} with RationalTrait
+不过在这里要引用this是不行的
+
+- lazy val
+trait LazyRationalTrait {
+	val numerArg: Int
+	val denomArg: Int
+	lazy val numer = numerArg / g
+	lazy val denom = denomArg / g
+	override def toString = numer +"/"+ denom
+	private lazy val g = {
+		require(denomArg != 0)
+		gcd(numerArg, denomArg)
+	}
+	private def gcd(a: Int, b: Int): Int =
+		if (b == 0) a else gcd(b, a % b)
+}
+
+20.6 抽象类型
+type T 同时具体定义的事物的占位符，T是对在声明点尚不可知的类型的引用，不同的子类可以提供不同的T实现
+class Food
+abstract class Animal {
+	def eat(food: Food)
+}
+class Grass extends Food
+class Cow extends Animal {
+	override def eat(food: Grass) {} // This won’t compile
+}
+则个在变异编译的时候会出错，因为Cow中的eat方法参数类型不同，所以不能重写eat方法
+如果允许的话，我们就会出现下面这种Cow吃鱼的情况
+class Fish extends Food
+val bessy: Animal = new Cow
+bessy eat (new Fish)
+
+应该采用的是更加精确的建模方式，Animal吃Food，但是Animal具体吃什么Food取决于具体的Animal
+所以可以使用抽象类型干净的表示出来：
+class Food
+abstract class Animal {
+	type SuitableFood <: Food
+	def eat(food: SuitableFood)
+}
+class Grass extends Food
+class Cow extends Animal {
+	type SuitableFood = Grass
+	override def eat(food: Grass) {}
+}
+
+20.7 路径依赖类型
+路径依赖类型表达了外在的对象，而内部类表达了外在的类
+
+20.8 枚举
+scala中不需要枚举的特殊语法，而是使用标准库中的类Enumeration，新枚举只需要扩展这个类的对象即可
+object Colot extends Enumeration {
+	val Red, Green, Blue = Value
+}
+这些值得类型是Enumeration 的内部类 Value，以及同名的无参数方法Value返回该类的新对象
+及Red的类型是Color.Value，属于路径依赖类型。
+
+20.9 案例研究 货币
+货币相加的时候，不同的货币的结果并不知道是属于什么结果的，如美元加欧元，结果用什么表示呢？
+scala有一种简单技巧解决，如果类定义的时候某些东西未可知，可以先定义它的抽象
+// A second (still imperfect) design of the Currency class
+abstract class AbstractCurrency {
+	type Currency <: AbstractCurrency
+	val amount: Long
+	def designation: String
+	override def toString = amount +" "+ designation
+	def + (that: Currency): Currency = ...
+	def * (x: Double): Currency = ...
+}
+abstract class Dollar extends AbstractCurrency {
+	type Currency = Dollar
+	def designation = "USD"
+}
+这样定义接口的时候就可以把两个Dollar结合在一起
+def + (that: Currency): Currency = new Currency {
+	val amount = this.amount + that.amount
+}
+不过这样 编译器会报一个错误，因为Scala对抽象类型的限制是不能创建抽象类型实例，也不能将抽象类型作为其他类型的超类型
+所以可以考虑工厂方法绕过这一限制，即把抽象类型和工厂方法从AbstractCurrency中转移出来：
+abstract class CurrencyZone {
+	type Currency <: AbstractCurrency
+	def make(x: Long): Currency
+	abstract class AbstractCurrency {
+		val amount: Long
+		def designation: String
+		override def toString = amount +" "+ designation
+		def + (that: Currency): Currency =
+			make(this.amount + that.amount)
+		def * (x: Double): Currency =
+			make((this.amount * x).toLong)
+	}
+}
+object US extends CurrencyZone {
+	abstract class Dollar extends AbstractCurrency {
+		def designation = "USD"
+	}
+	type Currency = Dollar
+	def make(x: Long) = new Dollar { val amount = x }
+}
+还有需要改进的地方，首先是子单位，即圆角分，增加后的代码如下：
+object US extends CurrencyZone {
+	abstract class Dollar extends AbstractCurrency {
+		def designation = "USD"
+	}
+	type Currency = Dollar
+	def make(cents: Long) = new Dollar {
+		val amount = cents
+	}
+	val Cent = make(1)
+	val Dollar = make(100)
+	val CurrencyUnit = Dollar
+	override def toString =
+		((amount.toDouble / CurrencyUnit.amount.toDouble)
+		formatted ("%."+ decimals(CurrencyUnit.amount) +"f")
+		+" "+ designation)
+}
+这里toString可以根据货币单位不同而适配不同的输出
+
+另一项改进是货币汇率，略
+
+
+Chap21 隐式转换与参数
+21.1 隐式转换
+scala的RandomAccessSeq具有大多是数组列表的使用方法，如take drop map filter etc
+要定义新的随机访问序列，只需要扩展RandomAccessSeq 特质，只需要完成两个抽象方法length 和 apply的定义
+
+但是对于已经定义的java的String，本来是很好地RandomAccessSeq[char], 但是没有办法在继承了，此时可以使用隐式操作
+implicit def stringWrapper(s : String) = 
+	new RandomAccessSeq[Char] {
+		def length = s.length
+		def apply(i: Int) = s.charAt(i)
+	}
+这样就可以使用了
+stringWrapper("abc123") exists (_.isDigit)
+也可以省略转换操作：
+"abc123" exists (_.isDigit)
+
+这里的优点是，由于特质 本身有方法，所以可以制定以少数几个方法而获取特质的所有特征
+另外还支持目标类型转换，及在代码的某个点需要的类型，简单讲就是一次转换，到处适用
+
+21.2 隐式操作 规则
+隐式定义是指编译器为了修正雷星座物语儿允许插入到程序中的定义
+例如x+y如果不能通过类型检查，贬义词会修改为convert(x)+y
+
+隐式转换的通用规则是：
+- 标记规则 只有标记为implicit的定义才是可用的
+- 作用域规则 插入的隐式转换必须以单一标识符的形式处于作用域中，或与转换的源或目标类型关联在一起
+就是说必须在使用的类中要把隐式转换方法引入进来；打毛衣标识符的一个例外是表一起会尝试在伴生对象中寻找隐式定义：
+如阐释穿Dollar对象给参数为Euro的方法，源类型是Dollar，目标类型是Euro，所以编译器会在这两个类中寻找隐式转换
+object Dollar {
+	implicit def dollarToEuro(x: Dollar): Euro = ...
+}
+class Dollar { ... }
+- 无歧义规则 隐式转换为由不存在其他可插入转换的前提下才能插入
+如果编译器发现同时有两个隐式转换可用的时候，编译器会报错，而不是选择最佳匹配
+- 单一调用规则 指挥长是一个隐式操作 而不会将x+y 重写为converst1(convert2(x)) + y
+- 显式操作先行规则 若编写代码类型检查无误，则不会尝试任何隐式操作
+- 隐式转换可以任意命名 比如一个对象中同时定义俩个转换，可以只引用其中一个达到选择的效果
+
+隐式操作会在三个地方被用到：转换为期望类型、制定（方法） 调用者的转换、隐式参数下面分别介绍:
+
+21.3 隐式转换为期望类型
+规则很简单 一答案编译器看到了X，但需要Y，就会检查从X 到Y的隐式转换函数。
+如scala.Predef中的：
+implicit def int2double(x: Int): Double = x.toDouble
+
+21.4 转换方法调用的接收者
+有两种用途：接收者转换使得新类可以平滑的集成到现存类层次中并且支持DSL
+如果编写了obj.doit 但是obj本身没有这个成员，编译器将在放弃之前尝试插入转换代码
+class Rational(n: Int, d: Int) {
+	...
+	def + (that: Rational): Rational = ...
+	def + (that: Int): Rational = ...
+}
+如前面介绍的Rational 这样的操作是允许的 oneHalf + oneHalf， oneHalf + 1
+但是对1 + oneHalf呢？只需要定义一个从Int 到Rational的隐式转换即可
+implicit def intToRational(x: Int) = new Rational(x, 1)
+
+还记得Map的创建方法吗？
+Map(1 -> "one", 2 -> "two", 3 -> "three")
+scala没有使用内建语法，而是定义在Predefined中的ArrowAssoc方法，和Any到ArrowAssoc的隐式转换
+package scala
+object Predef {
+	class ArrowAssoc[A](x: A) {
+		def -> [B](y: B): Tuple2[A, B] = Tuple2(x, y)
+	}
+	implicit def any2ArrowAssoc[A](x: A): ArrowAssoc[A] =
+		new ArrowAssoc(x)
+	...
+}
+
+21.5 隐式参数
+获取列表最大值
+def maxListUpBound[T <: Ordered[T]](elements: List[T]): T =
+	elements match {
+	case List() =>
+		throw new IllegalArgumentException("empty list!")
+	case List(x) => x
+	case x :: rest =>
+		val maxRest = maxListUpBound(rest)
+		if (x > maxRest) x
+		else maxRest
+}
+但是对Int类型就不能这样用，因为Int没有继承Ordered特质，所以一个更一般的方式是，在参数List[T]外，还需要第二个能发T转换为Ordered[T]的函数
+def maxListImpParm[T](elements: List[T])
+		(implicit orderer: T => Ordered[T]): T =
+	elements match {
+		case List() =>
+			throw new IllegalArgumentException("empty list!")
+		case List(x) => x
+		case x :: rest =>
+			val maxRest = maxListImpParm(rest)(orderer)
+			if (orderer(x) > maxRest) x
+			else maxRest
+}
+这种模式是如此普遍以至于scala标准库为许多通用类型提供了隐式的“orderer”方法，所以maxListImpParm发方法可以用在许多类型上
+
+隐式参数的样式规则 最好对隐式参数类型使用自定义命名的类型；至少用一个角色确定的名称为隐式参数的类型命名
+加入前面的maxListImpParm使用如下类型签名：
+def maxListPoorStyle[T](elements: List[T])
+	(implicit orderer: (T, T) => Boolean): T
+此时必须提供类型为(T,T)=>Boolean 的orderer参数，他过于平凡，没能说出这个方法的目的，可以是相等等判断
+所以前面的代码使用了较好的样式，使用T=>Ordered[T]的orderer参数，这个类型很清晰，扫清了加入标准库的障碍
+
+21.6 视界
+对前面的代码可以继续省略orderer转换
+def maxList[T](elements: List[T])
+		(implicit orderer: T => Ordered[T]): T =
+	elements match {
+		case List() =>
+			throw new IllegalArgumentException("empty list!")
+		case List(x) => x
+		case x :: rest =>
+			val maxRest = maxList(rest) // (orderer) is implicit
+			if (x > maxRest) x 			// orderer(x) is implicit
+			else maxRest
+	}
+这样实际上orderer的参数名字就可以换成任意名称了
+由于这种模式很普遍，所以scala可以让你省略这个参数的名称，并使用视界缩短方法头：
+def maxList[T <% Ordered[T]](elements: List[T]): T =
+	elements match {
+		case List() =>
+			throw new IllegalArgumentException("empty list!")
+		case List(x) => x
+		case x :: rest =>
+			val maxRest = maxList(rest) // (orderer) is implicit
+			if (x > maxRest) x // orderer(x) is implicit
+			else maxRest
+	}
+这里的T <% Ordered[T] 的意思是 任何T都好，只要T能被当做Ordered[T] 即可
+如Int不是Ordered[T]的子类型，但是只要有隐式转换可用，则仍然可以吧List[Int]传给maxList方法
+如果T恰好就是Ordered[T]类型，编译器将调用在Predefined中的隐式鉴别函数：
+implicit def identity[A](x: A): A = x
+
+21.7 隐式操作调试
+假设错误的把stringWrapper当做是String到List的变换，而不是到RandomAccessSeq的，则可能不明白为什么这样的代码会出错：
+val chars: List[Char] = "xyz"
+则可以使用 -Xprint:typer 获取更详细的调试信息
+
+
+Chap22 实现列表
+22.1 List类原理
+List不是内建的语言结构，是List抽象类，并且包含了两个子类 ::和 Nil
+先快速浏览一下：
+package scala
+abstract class List[+T] {
+可以看出List是抽象的，不能直接new；同时List是协变的，所以List[Int] 的值可以赋给 List[Any]的变量
+所有列表操作都用三个基本方法定义，在:: 和 Nil中实现：
+def isEmpty: Boolean
+def head: T
+def tail: List[T]
+
+Nil 定义了空队列，他继承自List[Nothing] 加上协变，所以可以兼容任何类型的List实例
+case object Nil extends List[Nothing] {
+	override def isEmpty = true
+	def head: Nothing =
+		throw new NoSuchElementException("head of empty list")
+	def tail: List[Nothing] =
+		throw new NoSuchElementException("tail of empty list")
+}
+
+::表示构造，代表非空列表，模式x::xs被当做是样本类::的构造器使用
+final case class ::[T](hd: T, tl: List[T]) extends List[T] {
+	def head = hd
+	def tail = tl
+	override def isEmpty: Boolean = false
+}
+可以更短小一些
+final case class ::[T](head: T, tail: List[T])
+		extends List[T] {
+	override def isEmpty: Boolean = false
+}
+
+其他方法都可以用这三个方法编写：
+def length: Int =
+	if (isEmpty) 0 else 1 + tail.length
+or:
+def drop(n: Int): List[T] =
+	if (isEmpty) Nil
+	else if (n <= 0) this
+	else tail.drop(n 1)
+or:
+def map[U](f: T => U): List[U] =
+	if (isEmpty) Nil
+	else f(head) :: tail.map(f)
+
+列表构造返回的是 元素的最精确的公共超类型
+def ::[U >: T](x: U): List[U] = new scala.::(x, this)
+
+这样的定义不仅仅是为了方便，也是为了以正确类型完成List类定义的必然结果，因为List是协变的；下面的定义就是不会成功的：
+// A thought experiment (which wouldn’t work)
+def ::(x: T): List[T] = new scala.::(x, this)
+
+列表连接方法:::定义方式与::类似：
+def :::[U >: T](prefix: List[U]): List[U] =
+	if (prefix.isEmpty) this
+	else prefix.head :: prefix.tail ::: this
+
+22.2 ListBuffer
+列表典型访问方式是递归，例如为了不使用map也能实现列表元素自增：
+def incAll(xs: List[Int]): List[Int] = xs match {
+	case List() => List()
+	case x :: xs1 => x + 1 :: incAll(xs1)
+}
+这种模式的确定是它不是尾递归的，所以每次递归都需要新的堆栈帧
+较为高效的可选方案是使用列表缓冲list buffer，收集积累列表元素，最后使用toList操作把缓冲转换为列表
+import scala.collection.mutable.ListBuffer
+val buf = new ListBuffer[Int]
+for (x <- xs) buf += x + 1
+buf.toList
+
+22.3 实际的List类
+List真正实现的多数方法都会避免采用递归方案而转用列表缓冲的循环方案替换
+final override def map[U](f: T => U): List[U] = {
+	val b = new ListBuffer[U]
+	var these = this
+	while (!these.isEmpty) {
+		b += f(these.head)
+		these = these.tail
+	}
+	b.toList
+}
+final case class ::[U](hd: U,
+		private[scala] var tl: List[U]) extends List[U] {
+	def head = hd
+	def tail = tl
+	override def isEmpty: Boolean = false
+}
+
+ListBuffer 在scala.collection.mutable中，所以可以访问:: 中的tl private字段
+package scala.collection.immutable
+final class ListBuffer[T] extends Buffer[T] {
+	private var start: List[T] = Nil
+	private var last0: ::[T] = _
+	private var exported: Boolean = false
+	...
+其中有说明ListBuffer特征的三个字段：
+start		指向存储于缓冲的所有元素的列表
+last0		指向列表中最后一个::单元
+exported	说明缓冲是否曾经通过使用toList操作转换成列表
+
+override def toList: List[T] = {
+	exported = !start.isEmpty
+	start
+}
+如果列表非空，则设置exported=true，所以toList非常搞笑，但是如果列表又被扩展了，会怎样呢
+当然一旦李彪从toList返回，就应该保持不变，不过想last0中添加后续元素将改变start指向的列表
+override def += (x: T) {
+	if (exported) copy()
+	if (start.isEmpty) {
+		last0 = new scala.::(x, Nil)
+		start = last0
+	} else {
+		val last1 = last0
+		last0 = new scala.::(x, Nil)
+		last1.tl = last0
+	}
+}
+要维护列表缓冲操作的正确性，需要转向对一个新列表进行操作，像第一句那样
+ListBuffer保证了只有在列表缓冲被转换为列表之后还需要扩展的情况下才需要复制
+
+
+Chap24 抽取器 Extractors
+24.1 例子 抽取email地址
+传统的方式
+if (isEMail(s)) println(user(s) +" AT "+ domain(s))
+else println("not an email address")
+模式匹配的方式
+s match {
+	case EMail(user, domain) => println(user +" AT "+ domain)
+	case _ => println("not an email address")
+}
+而找到两个连续的同一用户的email地址的复杂问题可以这样写：
+ss match {
+	case EMail(u1, d1) :: EMail(u2, d2) :: _ if (u1 == u2) => ...
+	...
+}
+这样更易读，但是字符串不是样本类，不具备符合EMail(user, domain)的表达方式，所以需要抽取器来帮助：
+
+24.2 抽取器
+具有unapply成员方法的对象，目的是为了匹配并分解值；通常可以定义构建值的对偶方法apply，但不是必须的
+object EMail {
+	// The injection method (optional)
+	def apply(user: String, domain: String) = user +"@"+ domain
+	// The extraction method (mandatory)
+	def unapply(str: String): Option[(String, String)] = {
+		val parts = str split "@"
+		if (parts.length == 2) Some(parts(0), parts(1)) else None
+	}
+}
+这里定义了apply 和unapply两个方法，apply含义是使用参数构造字符串。为了让这个更明显，可以让Email继承自函数类型：
+object EMail extends ((String, String) => String) { ... }
+unapply是Email成为抽取器的原因，现在一旦模式匹配碰到的是抽取器对象模式，就会在选择器表达使用unapply方法
+selectorString match { case EMail(user, domain) => ... }
+将引发调用：
+EMail.unapply(selectorString)
+如果结果是Some类型，就会进行匹配处理；如果是None，则会尝试其他模式或失败返回MatchError
+
+apply和unapply最好是对偶的
+即EMail.unapply(EMail.apply(user, domain)) 应该返回Some(user, domain)
+EMail.unapply(obj) match {
+	case Some(u, d) => EMail.apply(u, d)
+}
+如果匹配成功，应该还是和原来一样的obj
+
+24.3 0或1个变量的模式
+上面的例子适用于两个以上的变量的元组，下面举一下0或一元变量的例子
+抽取一行中同时出现两个字符串：
+object Twice {
+	def apply(s: String): String = s + s
+	def unapply(s: String): Option[String] = {
+		val length = s.length / 2
+		val half = s.substring(0, length)
+		if (half == s.substring(length)) Some(half) else None
+	}
+}
+检查全部是大写的字符串
+object UpperCase {
+	def unapply(s: String): Boolean = s.toUpperCase == s
+}
+
+下面的模式匹配集中应用了之前所有的抽取器的定义：
+def userTwiceUpper(s: String) = s match {
+	case EMail(Twice(x @ UpperCase()), domain) =>
+		"match: "+ x +" in domain "+ domain
+	case _ =>
+		"no match"
+}
+
+scala> userTwiceUpper("DIDI@hotmail.com")
+res0: java.lang.String = match: DI in domain hotmail.com
+scala> userTwiceUpper("DIDO@hotmail.com")
+res1: java.lang.String = no match
+scala> userTwiceUpper("didi@hotmail.com")
+res2: java.lang.String = no match
+
+24.4 变参抽取器
+又是固定数目元组值也显得不够灵活，例如域名的匹配：
+dom match {
+	case Domain("org", "acm") => println("acm.org")
+	case Domain("com", "sun", "java") => println("java.sun.com")
+	case Domain("net", _*) => println("a .net domain")
+}
+变参使用的方法是unapplySeq方法，其结果必须要和Option[Seq[T]]一致
+object Domain {
+	// The injection method (optional)
+	def apply(parts: String*): String =
+		parts.reverse.mkString(".")
+	// The extraction method (mandatory)
+	def unapplySeq(whole: String): Option[Seq[String]] =
+		Some(whole.split("\\.").reverse)
+}
+
+如寻找某个.com域名中名为tom的email地址：
+def isTomInDotCom(s: String): Boolean = s match {
+	case EMail("tom", Domain("com", _*)) => true
+	case _ => false
+}
+
+最后展示一个email的新抽取器
+object ExpandedEMail {
+	def unapplySeq(email: String)
+			: Option[(String, Seq[String])] = {
+		val parts = email split "@"
+		if (parts.length == 2)
+			Some(parts(0), parts(1).split("\\.").reverse)
+		else
+			None
+	}
+}
+
+scala> val s = "tom@support.epfl.ch"
+s: java.lang.String = tom@support.epfl.ch
+scala> val ExpandedEMail(name, topdom, subdoms @ _*) = s
+name: String = tom
+topdom: String = ch
+subdoms: Seq[String] = WrappedArray(epfl, support)
+
+24.5 抽取器和序列模式
+15.2中已经知道使用序列模式访问列表或数组元素：
+List()
+List(x, y, _*)
+Array(x, 0, 0, _)
+
+实际上是使用了List【或Array】中的unapplySeq方法实现的抽取器
+package scala
+object List {
+	def apply[T](elems: T*) = elems.toList
+	def unapplySeq[T](x: List[T]): Option[Seq[T]] = Some(x)
+	...
+}
+
+24.6 抽取器 vs 样本类
+样本类的缺点是暴露了数据 的具体表达方式，其优势是更简洁高效的定义和模式匹配，并具有覆盖检查
+抽取器的优势是阶段了数据表达和模式之间的关系，即表征独立 representation independence
+卡一样一开始使用样本类，直到有新需求改为抽取器，这两种模式在scala中看上去是一样的
+
+24. 正则表达式
+ab?、\d+、[a-dA-D]\w*、(-)?(\d+)(\.\d*)?
+scala> import scala.util.matching.Regex
+scala> val Decimal = new Regex("(-)?(\\d+)(\\.\\d*)?")
+Decimal: scala.util.matching.Regex = (-)?(\d+)(\.\d*)?
+
+使用"""可以减少反斜杠的数量
+scala> val Decimal = new Regex("""(-)?(\d+)(\.\d*)?""")
+Decimal: scala.util.matching.Regex = (-)?(\d+)(\.\d*)?
+或更短
+scala> val Decimal = """(-)?(\d+)(\.\d*)?""".r
+Decimal: scala.util.matching.Regex = (-)?(\d+)(\.\d*)?
+
+因为RichString中提供了r这个方法：
+package scala.runtime
+import scala.util.matching.Regex
+class StringOps(self: String) ... {
+	...
+	def r = new Regex(self)
+}
+
+regex findFirstIn str
+查找str中regex的首次出现，以Option形式返回.
+regex findAllIn str
+查找str中regex的所有出现，以Iterator形式返回.
+regex findPrefixOf str
+查找str开始位置regex的出现，以Option形式返回.
+
+scala> val Decimal = """(-)?(\d+)(\.\d*)?""".r
+Decimal: scala.util.matching.Regex = (-)?(\d+)(\.\d*)?
+scala> val input = "for -1.0 to 99 by 3"
+input: java.lang.String = for -1.0 to 99 by 3
+scala> for (s <-Decimal findAllIn input) println(s)
+-1.0
+99
+3
+scala> Decimal findFirstIn input
+res7: Option[String] = Some(1.0)
+scala> Decimal findPrefixOf input
+res8: Option[String] = None
+
+scala中所有regex都定义了抽取器，用来鉴别匹配regex分组的子字符串：
+scala> val Decimal(sign, integerpart, decimalpart) = "-1.23"
+sign: String = -
+integerpart: String = 1
+decimalpart: String = .23
+
+解构过程是Decimal的正则表达式定义了unapplySeq方法，它把相应的部分左匹配
+如果成功则正则表达式(-)?(\d+)(\.\d*)? 的三个分组对应的部分就以模式元素的形式返回
+并匹配到三个模式变量 sign, integerpart, decimalpart 中，如果有分组缺失，则设置为null
+scala> val Decimal(sign, integerpart, decimalpart) = "1.0"
+sign: String = null
+integerpart: String = 1
+decimalpart: String = .0
+
+scala> for (Decimal(s, i, d) <-Decimal findAllIn input)
+		println("sign: "+ s +", integer: "+
+			i +", decimal: "+ d)
+sign: -, integer: 1, decimal: .0
+sign: null, integer: 99, decimal: null
+sign: null, integer: 3, decimal: null
+
+Chap25 注解 略
+
+Chap26 XML
+scala允许在任何存在表达式的地方以字面量的形式键入XML，键入的结果是scala.xml.Elem
+其他重要的XML类包括：
+- Node 所有节点的抽象超类
+- Text 文本节点 如<a>stuff</a> 的stuff就是Text类的
+- NodeSeq 保存节点序列。XML中很多方法是可以用在单个节点上的，可以把单个节点看作是一个元素的NodeSeq
+
+scala中可以在XML字面量中使用花括号做转义，执行scala代码
+如果以打印的方式输出返回节点，则文本中所有的< > &都将被转义
+scala> <a> {"</a>potential security hole<a>"} </a>
+res4: scala.xml.Elem = <a> &lt;/a&gt;potential security hole&lt;a&gt; </a>
+如果使用低级字符串，会陷入以下圈套，导致修改XML树结构
+scala> "<a>" + "</a>potential security hole<a>" + "</a>"
+res5: java.lang.String = <a></a>potential security hole<a></a>
+
+想直接使用花括号，只要在一行中写两次花括号即可
+scala> <a> {{{{brace yourself!}}}} </a>
+res7: scala.xml.Elem = <a> {{brace yourself!}} </a>
+
+26.4 序列化
+假设有一个数据类，只需要添加一个相应的toXML方法
+abstract class CCTherm {
+	val description: String
+	val yearMade: Int
+	val dateObtained: String
+	val bookPrice: Int // in US cents
+	val purchasePrice: Int // in US cents
+	val condition: Int // 1 to 10
+	override def toString = description
+	def toXML =
+		<cctherm>
+			<description>{description}</description>
+			<yearMade>{yearMade}</yearMade>
+			<dateObtained>{dateObtained}</dateObtained>
+			<bookPrice>{bookPrice}</bookPrice>
+			<purchasePrice>{purchasePrice}</purchasePrice>
+			<condition>{condition}</condition>
+		</cctherm>
+}
+
+26.5 拆解XML
+scala提供了内置方法处理XML
+- 抽取文本  通过节点的text方法
+scala> <a>Sounds <tag/> good</a>.text
+res8: String = Sounds good
+并且会自动解码
+scala> <a> input ---&gt; output </a>.text
+res9: String = input ---> output
+
+- 抽取子元素 通过\ 加标签名即可
+scala> <a><b><c>hello</c></b></a> \ "b"
+res10: scala.xml.NodeSeq = <b><c>hello</c></b>
+
+还可以使用\\ 代替\ 执行深度搜索寻找子元素等内容
+scala> <a><b><c>hello</c></b></a> \ "c"
+res11: scala.xml.NodeSeq =
+scala> <a><b><c>hello</c></b></a> \\ "c"
+res12: scala.xml.NodeSeq = <c>hello</c>
+scala> <a><b><c>hello</c></b></a> \ "a"
+res13: scala.xml.NodeSeq =
+scala> <a><b><c>hello</c></b></a> \\ "a"
+res14: scala.xml.NodeSeq = <a><b><c>hello</c></b></a>
+
+- 抽取属性 可以使用\ \\抽取报表前属性，只要在属性名前加上@符号
+scala> val joe = <employee
+name="Joe"
+rank="code monkey"
+serial="123"/>
+joe: scala.xml.Elem = <employee rank="code monkey" name="Joe"
+serial="123"></employee>
+scala> joe \ "@name"
+res15: scala.xml.NodeSeq = Joe
+scala> joe \ "@serial"
+res16: scala.xml.NodeSeq = 123
+
+
+
+30.4 通过重用线程获得更好性能
+重用线程，scala提供了receive之外的备选方法react，它在找到并处理消息后不返回【返回的是Nothing】
+因为react不需要返回，所以不需要保留当前线程对战，所以tor可以再下一个被唤醒的线程中重用当前线程
+这种方式很高效，如果每个actor都是用react而不是reeive的话，理论上只需要一个线程就能够满足程序全部actor的需要
+当然实际 情况下，程序至少需要几个receive的actor，不过要尽可能实用react来节约 线程
+
+因为react不返回，接收消息的消息处理器必须同时处理消息和执行actor余下所有工作，通常做法是用一个顶级方法，如act自身，供消息处理器完成时调用
+下面是一个返回主机名对应IP地址的示例：
+object NameResolver extends Actor {
+	import java.net.{InetAddress, UnknownHostException}
+	def act() {
+		react {
+			case (name: String, actor: Actor) =>
+				actor ! getIp(name)
+				act()
+			case "EXIT" =>
+				println("Name resolver exiting.")
+				// quit
+			case msg =>
+				println("Unhandled message: "+ msg)
+				act()
+		}
+	}
+	def getIp(name: String): Option[InetAddress] = {
+		try {
+			Some(InetAddress.getByName(name))
+		} catch {
+			case _:UnknownHostException => None
+		}
+	}
+}
+
+scala> NameResolver.start()
+res0: scala.actors.Actor = NameResolver$@90d6c5
+scala> NameResolver ! ("www.scala-lang.org", self)
+scala> self.receiveWithin(0) { case x => x }
+res2: Any = Some(www.scala-alng.org/128.178.154.102)
+scala> NameResolver ! ("wwwwww.scala-lang.org", self)
+scala> self.receiveWithin(0) { case x => x }
+res4: Any = None
+
+这种方式很常见，所以actor库使用loop来特别支持：
+def act() {
+	loop {
+		react {
+			case (name: String, actor: Actor) =>
+				actor ! getIp(name)
+			case msg =>
+				println("Unhandled message: " + msg)
+		}
+	}
+}
+
+30.5 良好的actor风格
+- Actor 不应阻塞
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
