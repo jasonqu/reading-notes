@@ -61,3 +61,19 @@ http://www.avajava.com/tutorials/lessons/how-do-i-use-form-authentication-with-t
 http://www.mkyong.com/webservices/jax-ws/application-authentication-with-jax-ws/
 http://docs.oracle.com/cd/E24329_01/web.1211/e24983/secure.htm#RESTF256
 
+
+
+
+
+
+
+http://crypto.stackexchange.com/questions/2663/what-is-the-time-complexity-of-the-rc4-encryption-decryption-algorithms
+http://zhidao.baidu.com/question/7745006.html
+http://blog.csdn.net/kamaliang/article/details/6690979
+http://en.wikipedia.org/wiki/Advanced_Encryption_Standard
+http://www.open-open.com/lib/view/open1403354185778.html
+
+http://en.wikipedia.org/wiki/Stream_cipher
+http://en.wikipedia.org/wiki/Tiny_Encryption_Algorithm
+http://en.wikipedia.org/wiki/XTEA
+http://en.wikipedia.org/wiki/RC4
