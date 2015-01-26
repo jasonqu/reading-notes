@@ -98,3 +98,24 @@ mysql> select length(name1), length(name) from test2;
 
 mysql> quit
 
+
+字符集
+http://www.laruence.com/2008/01/05/12.html
+http://blog.csdn.net/ithomer/article/details/5130789
+java 字符集
+http://www.ibm.com/developerworks/cn/java/j-lo-chinesecoding/
+http://blog.csdn.net/ns_code/article/details/14162087
+http://zh.wikipedia.org/wiki/Unicode
+
+
+Mysql 查看连接数,状态
+http://blog.csdn.net/starnight_cbj/article/details/4492555
+show status;
+
+show variables like '%max_connections%';
+
+
+
+
+
+

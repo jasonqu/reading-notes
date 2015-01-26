@@ -6,6 +6,10 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", web, javascript, css]
 ---
 
+[15个顶级Java多线程面试题及答案](http://www.codeceo.com/article/15-java-thread-questions.html)
+
+[推荐！国外程序员整理的Java资源大全](http://www.iteye.com/news/30076)
+
 [如何将Java项目发布到Maven中](http://sunspot.blog.51cto.com/372554/1560907)
 
 [推荐在线学习Java的英文资源](http://www.laixintao.com/posts/734)
