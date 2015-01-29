@@ -1,0 +1,121 @@
+akka文档
+Scala社区
+mysite
+bootlog sbt
+apple app
+android app
+intro to scala
+intro to akka
+为什么【系统】测试很难  测试论文 该测试什么 什么可以跳过 功能如何组合
+awosome chinese
+你多大了 历史今天
+reader
+things not ready they never
+你算老几
+说服自己
+祈福
+gitbook note
+冥想
+给了他们更好生活的希望，他们才会努力工作 —— 速度与激情
+文明之光
+信任危机 人。工具无法解决固执
+学习因为恐惧
+互联网 人性检验场
+学车
+sbt
+jooq mock
+multithread executer
+bean util magic
+行为包入数据
+什么样的工作决定上限，什么样的决定下线，克洛斯 格策
+good programming 只需要学习一次，不需要测试，知道自己写的就是某种结果，没有歧义。可惜编程不是二维图形
+social codereader 利用google api整合学习资源
+组织低效 分工
+量化自我
+寻找意义
+baby diary
+服务器程序不需要考虑版本兼容问题
+soft world
+believe yourself the only way
+微信公众号
+计划 担当 man文明提取信息 健康 攀比 万人敌
+code html
+名人名言 输出
+机器学习实战
+注释 宏观微观 前提
+集权的亮点从来都是集中力量办的大事。那些力量被抽走的地方也从来发不出自己的声音-企业管理
+他有多好真的一点都不重要，关键是他对你有多好
+软件约束
+蜘蛛侠
+健忘 愚蠢 关系
+havetodo hopedo
+你的生命有什么可能
+智慧智力与教育
+geek社区 科研社区
+文章中 评论
+浏览器会复用链接吗
+为什么坏可以扎堆，好只能独自？
+趋势
+加油高台
+番茄闹钟
+blog相关性，推荐
+选择比努力重要java js
+圣者通吃
+匿名评价10%
+公司内悬赏制
+企业qq
+细节
+沉么成本
+没人一个网站
+location based appoint
+focus
+协同性工作和竞争性工作 竞争的是资源 互联网竞争用户量
+界定改动的影响范围
+修改添加逻辑需要修改更新逻辑
+自动测试管理
+web编程就是a->b的过程
+人们不知道搜索什么的时候
+pad cofe reader
+guava
+jetty
+jodatime
+todo is to forget？
+有交换就有钱，减缓的本质是时间和资源。资源为基础的经济就意味着人必须把工作当做兴趣来处理才不会有矛盾
+服务列表，会员卡单管理
+语言特性，自更新，自定义
+边界的定义
+自动dos监测
+人才关注工作，天才关注创作
+需求分布，按照马斯洛理论分级处理
+货币体系，统一与分解
+为什么代码质量会下降
+决策
+皇帝的权力
+accumulatable才可以 生产和消费
+网络教学，社区服务，关注某社区，利用网络增加社区联系
+责任划分
+中国人口，base on map
+点滴积累
+人的伸展
+行业金字塔分析
+产品粘着度 
+什么是可关闭的issue
+编程与魔术，机械还是大脑
+人的协作与竞争网络，在任何领域的大众都需要一个路标，描绘出来
+many ways to do things, the best way?
+排他性原则，开放性原则，时间
+思考时间，time to think
+大教堂与集市，集市怎样成长为大教堂？大量的信息谁来rank 分检 过滤
+极特书屋
+指数发展与提升
+hate reference
+不要同时做两件事，开门，上台阶
+有时好的习惯之间是矛盾的
+名言
+学术的结果是对待细节太认真？
+会议良莠不齐
+增长的模型
+崩溃，孩子的叛逆。我爸的情况，知识的增长带来不同阶段的变化，马斯洛的改进
+a way to confession a way to forget
+消费者 当弱者
+
