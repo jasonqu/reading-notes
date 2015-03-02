@@ -6,6 +6,13 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", project]
 ---
 
+
+[人工智能(AI)资料大全](http://www.techug.com/awesome-artificial-intelligence)
+important
+
+[深入解析NoSQL数据库的分布式算法](http://www.techug.com/distributed-algorithms-in-nosql-databases)
+important
+
 [Reddit排名算法工作原理](http://www.aqee.net/how-reddit-ranking-algorithms-work/)
 
 [Hacker News 排名算法工作原理](http://www.aqee.net/how-hacker-news-ranking-algorithm-works/)
