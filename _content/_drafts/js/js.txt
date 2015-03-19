@@ -62,11 +62,76 @@ sayHelloInFiveSeconds("Adam"); // 会在5秒后弹出 "Hello, Adam!"
 
 ### 5. 对象、构造函数与原型
 
+当对象中的函数被调用时，这个函数可以通过`this`关键字访问其依附的这个对象。
+myObj = {
+    myString: "Hello world!",
+    myFunc: function(){
+        return this.myString;
+    }
+};
+myObj.myFunc(); // = "Hello world!"
+
+// 但这个函数访问的其实是其运行时环境，而非定义时环境，即取决于函数是如何调用的。
+// 所以如果函数被调用时不在这个对象的上下文中，就不会运行成功了。
+var myFunc = myObj.myFunc;
+myFunc(); // = undefined
+
+// 相应的，一个函数也可以被指定为一个对象的方法，并且可以通过`this`访问
+// 这个对象的成员，即使在行数被定义时并没有依附在对象上。
+var myOtherFunc = function(){
+    return this.myString.toUpperCase();
+}
+myObj.myOtherFunc = myOtherFunc;
+myObj.myOtherFunc(); // = "HELLO WORLD!"
+
+// 当我们通过`call`或者`apply`调用函数的时候，也可以为其指定一个执行上下文。
+var anotherFunc = function(s){
+    return this.myString + s;
+}
+anotherFunc.call(myObj, " And Hello Moon!"); // = "Hello World! And Hello Moon!"
+
+// `apply`函数几乎完全一样，只是要求一个array来传递参数列表。
+anotherFunc.apply(myObj, [" And Hello Sun!"]); // = "Hello World! And Hello Sun!"
+
+// 当一个函数接受一系列参数，而你想传入一个array时特别有用。
+Math.min(42, 6, 27); // = 6
+Math.min([42, 6, 27]); // = NaN (uh-oh!)
+Math.min.apply(Math, [42, 6, 27]); // = 6
+
+// 但是`call`和`apply`只是临时的。如果我们希望函数附着在对象上，可以使用`bind`。
+var boundFunc = anotherFunc.bind(myObj);
+boundFunc(" And Hello Saturn!"); // = "Hello World! And Hello Saturn!"
+
+// `bind` 也可以用来部分应用一个函数（柯里化）。
+var product = function(a, b){ return a * b; }
+var doubler = product.bind(this, 2);
+doubler(8); // = 16
 
 
 
 
 
+
+
+
+
+## A re-introduction to JavaScript
+
+遍历一个数组：
+
+for (var i = 0; i < a.length; i++) {
+    // Do something with a[i]
+}
+这么做效率不太好，因为每循环一次都要计算一次长度。改进的版本是：
+
+for (var i = 0, len = a.length; i < len; i++) {
+    // Do something with a[i]
+}
+还有一种更好的写法是：
+
+for (var i = 0, item; item = a[i++];) {
+    // Do something with item
+}
 
 
 
