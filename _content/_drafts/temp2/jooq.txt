@@ -1,0 +1,147 @@
+Result<Record3<String, String, String>> result = create.select(BOOK.TITLE, AUTHOR.FIRST_NAME, AUTHOR.LAST_NAME)
+.from(BOOK)
+.join(AUTHOR) .on(BOOK.AUTHOR_ID.equal(AUTHOR.ID)) .where(BOOK.PUBLISHED_IN.equal(1948)) .fetch();
+
+// Use your favourite tool to construct SQL strings:
+String sql = "SELECT title, first_name, last_name FROM book JOIN author ON book.author_id = author.id " +
+"WHERE book.published_in = 1984";
+// Fetch results using jOOQ Result<Record> result = create.fetch(sql);
+// Or execute that SQL with JDBC, fetching the ResultSet with jOOQ: ResultSet rs = connection.createStatement().executeQuery(sql); Result<Record> result = create.fetch(rs);
+
+
+3.3.4
+
+// Fetch all authors
+for (AuthorRecord author : create.fetch(AUTHOR)) {
+
+    // Skip previously distinguished authors
+    if ((int) author.getDistinguished() == 1)
+        continue;
+  
+    // Check if the author has written more than 5 books
+    if (author.fetchChildren(Keys.FK_BOOK_AUTHOR).size() > 5) {
+    
+        // Mark the author as a "distinguished" author
+        author.setDistinguished(1);
+        author.store();
+    }
+}
+
+3.4.1.6
+
+a tutorial 
+
+package test;
+
+// For convenience, always static import your generated tables and
+// jOOQ functions to decrease verbosity:
+import static test.generated.Tables.*;
+import static org.jooq.impl.DSL.*;
+
+import java.sql.*;
+
+import org.jooq.*;
+import org.jooq.impl.*;
+
+public class Main {
+
+    /**
+     * @param args
+     */
+    public static void main(String[] args) {
+        String userName = "root";
+        String password = "";
+        String url = "jdbc:mysql://localhost:3306/library";
+
+        // Connection is the only JDBC resource that we need
+        // PreparedStatement and ResultSet are handled by jOOQ, internally
+        try (Connection conn = DriverManager.getConnection(url, userName, password)) {
+            DSLContext create = DSL.using(conn, SQLDialect.MYSQL);
+            Result<Record> result = create.select().from(AUTHOR).fetch();
+
+            for (Record r : result) {
+                Integer id = r.getValue(AUTHOR.ID);
+                String firstName = r.getValue(AUTHOR.FIRST_NAME);
+                String lastName = r.getValue(AUTHOR.LAST_NAME);
+
+                System.out.println("ID: " + id + " first name: " + firstName + " last name: " + lastName);
+            }
+        } 
+
+        // For the sake of this tutorial, let's keep exception handling simple
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+3.4.3 TODO
+
+3.4.4.Using jOOQ with Flyway
+
+4.2. The DSLContext class
+DSLContext references a org.jooq.Configuration, an object that configures jOOQ's behaviour when executing queries
+
+#### Fluent creation of a DSLContext object
+
+// Create it from a pre-existing configuration
+DSLContext create = DSL.using(configuration);
+
+// Create it from ad-hoc arguments
+DSLContext create = DSL.using(connection, dialect);
+
+#### Contents of a Configuration object
+
+4.2.3. Connection vs. DataSource
+
+TODO
+
+4.2.4. Custom data ?
+
+4.3.1. jOOQ's DSL and model API
+
+#### History of SQL building and incremental query building (a.k.a. the model API) TODO
+
+#### Mutability
+
+// Conditional expressions (immutable)
+// -----------------------------------
+Condition a = BOOK.TITLE.equal("1984");
+Condition b = BOOK.TITLE.equal("Animal Farm");
+
+// The following can be said
+a       != a.or(b); // or() does not modify a
+a.or(b) != a.or(b); // or() always creates new objects
+
+// Statements (mutable)
+// --------------------
+SelectFromStep<?> s1 = select();
+SelectJoinStep<?> s2 = s1.from(BOOK);
+SelectJoinStep<?> s3 = s1.from(AUTHOR);
+
+// The following can be said
+s1 == s2; // The internal object is always the same
+s2 == s3; // The internal object is always the same
+
+
+
+4.3.3.1. The SELECT clause
+
+Typesafe projections with degree up to 22
+
+
+4.3.3.10 4.3.3.11 more info on paging
+
+
+
+
+
+
+
+
+
+
+
+
+
+
