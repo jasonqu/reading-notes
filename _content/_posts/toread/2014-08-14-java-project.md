@@ -6,6 +6,20 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", web, javascript, css]
 ---
 
+[浅析JVM内存结构和6大区域](http://www.iteye.com/news/30350)
+
+[Java开发熟手该当心的11个错误](http://www.iteye.com/news/30336)
+
+[Java 8新的时间日期库的20个使用示例](http://ifeve.com/20-examples-of-date-and-time-api-from-java8/)
+
+[JAVA面试700问（六）](http://ifeve.com/java-interview-page-6/)
+
+[每个Java程序员需要了解的8个Java开发工具](http://www.iteye.com/news/30313)
+
+[2015年值得关注的几个Web技术](http://www.iteye.com/news/30275)
+
+[第六章 Web开发实战1——HTTP服务](http://jinnianshilongnian.iteye.com/blog/2188113)
+
 [15个顶级Java多线程面试题及答案](http://www.codeceo.com/article/15-java-thread-questions.html)
 
 [推荐！国外程序员整理的Java资源大全](http://www.iteye.com/news/30076)
