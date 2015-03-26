@@ -28,3 +28,16 @@ http://www.oschina.net/translate/performance-optimisation-with-timeline-profiles
 
 
 
+
+fiddler ajax
+
+http://www.leggetter.co.uk/2010/03/19/using-fiddler-to-help-develop-cross-domain-capable-javascript-web-applications.html
+
+更多跨域话题
+http://stackoverflow.com/questions/20035101/no-access-control-allow-origin-header-is-present-on-the-requested-resource
+http://www.html5rocks.com/en/tutorials/cors/
+https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Access_control_CORS#Access-Control-Allow-Origin
+
+http://yuguo.us/weblog/access-control-allow-origin/
+http://blog.csdn.net/hfahe/article/details/7730944
+

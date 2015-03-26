@@ -14,6 +14,25 @@ random variable随机变量实际上是一个函数
 二项分布
 随机变量无限多时 变成正态分布
 
+泊松分布
+大数定律
+
+Observational Study vs Experimental Study
+Correlation vs causality
+
+Statistical significance of experiment
+https://www.khanacademy.org/math/probability/statistical-studies/hypothesis-test/v/statistical-significance-experiment
+
+categorical data
+
+statistics:
+descriptive inferential
+
+get expected value
+https://www.khanacademy.org/math/probability/random-variables-topic/expected-value/v/expected-value-profit-lottery-ticket
+
+
+
 
 
 

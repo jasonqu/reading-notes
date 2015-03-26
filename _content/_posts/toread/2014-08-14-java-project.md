@@ -6,6 +6,8 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", web, javascript, css]
 ---
 
+[用Java生成字符画](http://www.iteye.com/news/30362)
+
 [浅析JVM内存结构和6大区域](http://www.iteye.com/news/30350)
 
 [Java开发熟手该当心的11个错误](http://www.iteye.com/news/30336)
