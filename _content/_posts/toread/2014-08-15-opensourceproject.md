@@ -6,6 +6,7 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", project]
 ---
 
+[Neutron的软件架构](http://www.iteye.com/news/30458)
 
 [人工智能(AI)资料大全](http://www.techug.com/awesome-artificial-intelligence)
 important

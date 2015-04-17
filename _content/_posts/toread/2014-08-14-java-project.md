@@ -6,6 +6,13 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", web, javascript, css]
 ---
 
+[Java中不同的并发实现的性能比较](http://ifeve.com/forkjoin-framework-vs-parallel-streams-vs-executorservice-the-ultimate-benchmark/)
+
+https://github.com/akullpp/awesome-java
+http://www.iteye.com/news/30390
+
+[深入理解G1垃圾收集器](http://ifeve.com/%e6%b7%b1%e5%85%a5%e7%90%86%e8%a7%a3g1%e5%9e%83%e5%9c%be%e6%94%b6%e9%9b%86%e5%99%a8/)
+
 [用Java生成字符画](http://www.iteye.com/news/30362)
 
 [浅析JVM内存结构和6大区域](http://www.iteye.com/news/30350)

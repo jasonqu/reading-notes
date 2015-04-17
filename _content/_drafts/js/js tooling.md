@@ -41,3 +41,42 @@ https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Access_control_CORS#Access-Con
 http://yuguo.us/weblog/access-control-allow-origin/
 http://blog.csdn.net/hfahe/article/details/7730944
 
+
+
+
+https://www.jetbrains.com/webstorm/documentation/
+videos
+
+
+
+
+
+
+
+
+
+
+npm install -g bower
+
+如果需要proxy可以这样
+npm install -g bower --proxy http://xxx:8888
+proxy
+http://www.cnblogs.com/huang0925/archive/2013/05/17/3083207.html
+
+bower proxy
+http://stackoverflow.com/questions/18359887/bower-proxy-configuration
+http://stackoverflow.com/questions/21705091/bower-behind-a-proxy
+
+
+
+
+git
+http://stackoverflow.com/questions/783811/getting-git-to-work-with-a-proxy-server
+http://www.vpsee.com/2011/07/how-to-use-git-through-a-http-proxy/
+
+sbt
+http://stackoverflow.com/questions/13803459/how-to-use-sbt-from-behind-proxy
+
+
+
+

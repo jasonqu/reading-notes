@@ -34,3 +34,23 @@ https://developer.apple.com/library/safari/documentation/AudioVideo/Conceptual/U
 in here
 https://developer.apple.com/library/safari/documentation/AudioVideo/Conceptual/Using_HTML5_Audio_Video/ControllingMediaWithJavaScript/ControllingMediaWithJavaScript.html#//apple_ref/doc/uid/TP40009523-CH3-SW13
 
+
+iPhone Video Placeholder
+
+On iPhone and iPod touch, a placeholder with a play button is shown until the user initiates playback, as shown in Figure 2-1. The placeholder is translucent, so the background or any poster image shows through. The placeholder provides a way for the user to play the media. If the iOS device cannot play the specified media, there is a diagonal bar through the control, indicating that it cannot play.
+
+On the desktop and iPad, the first frame of a video displays as soon as it becomes available. There is no placeholder.
+
+
+
+防止用户拖拽？
+iosvideo支持timeupdate和seek事件，而且支持设定时间
+需要做的是update的时候不要把seek的情况给update了
+http://stackoverflow.com/questions/9483542/is-it-possible-to-restrict-forwarding-in-html5-video
+
+http://blog.millermedeiros.com/html5-video-issues-on-the-ipad-and-how-to-solve-them/
+
+http://www.html5rocks.com/en/tutorials/video/basics/
+
+fiddler
+http://www.leggetter.co.uk/2010/03/19/using-fiddler-to-help-develop-cross-domain-capable-javascript-web-applications.html

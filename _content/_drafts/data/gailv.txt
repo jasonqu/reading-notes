@@ -35,4 +35,26 @@ https://www.khanacademy.org/math/probability/random-variables-topic/expected-val
 
 
 
+Covariance and the regression line
+Covariance, Variance and the Slope of the Regression Line
+
+Conv(X,Y) = E[(X-E[X])(Y-E[Y])] = E[XY] - E[Y]E[X] = xy - y*x
+
+http://www.ck12.org/
+
+
+Central limit theorem
+Standard Error of the Mean (a.k.a. the standard deviation of the sampling distribution of the sample mean!)
+
+https://www.khanacademy.org/math/probability/statistics-inferential/sampling_distribution/v/sampling-distribution-example-problem
+
+
+
+http://onlinestatbook.com/
+
+
+
+
+
+
 
