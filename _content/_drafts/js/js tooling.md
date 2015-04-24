@@ -55,7 +55,6 @@ videos
 
 
 
-
 npm install -g bower
 
 如果需要proxy可以这样
