@@ -6,6 +6,8 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", career]
 ---
 
+http://www.programmer.com.cn/7191/
+
 [创业之前问问自己，能不能做好这14件事情](http://www.techug.com/14-things-you-better-love-before-becoming-an-entrepreneur)
 
 [技术创始人如何挑选非技术合伙人？](http://www.techug.com/how-to-choose-founder)

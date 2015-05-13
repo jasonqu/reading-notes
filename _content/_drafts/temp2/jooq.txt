@@ -140,8 +140,48 @@ Typesafe projections with degree up to 22
 
 
 
+http://www.jooq.org/doc/3.6/manual-single-page/#jooq-with-spring
+https://github.com/brettwooldridge/HikariCP
 
+public class JooqHelper {
+  static Logger log = LoggerFactory.getLogger(Convertor.class);
+  private static final JooqHelper helper = new JooqHelper();
+  private final DataSourceConnectionProvider provider;
 
+  private JooqHelper() {
+    HikariDataSource ds = null;
+    try {
+      Class.forName("com.mysql.jdbc.Driver").newInstance();
+      HikariConfig config = new HikariConfig();
+      config.setJdbcUrl("jdbc:mysql://localhost:3306/simpsons");
+      config.setUsername("bart");
+      config.setPassword("51mp50n");
+      config.addDataSourceProperty("cachePrepStmts", "true");
+      config.addDataSourceProperty("prepStmtCacheSize", "5");
+      config.addDataSourceProperty("prepStmtCacheSqlLimit", "10");
+      ds = new HikariDataSource(config);
+    } catch (Exception e) {
+      log.error("init exception", e);
+    }
+    provider = new DataSourceConnectionProvider(ds);
+  }
 
+  public static JooqHelper instance() {
+    return helper;
+  }
 
+  private MockDataProvider testMocker = null;
+  private boolean test = false;
+  public void setMockDataProvider(MockDataProvider mocker) {
+    this.testMocker = mocker;
+    this.test = true;
+  }
+
+  public DSLContext create(String url, String username, String password) throws SQLException {
+    return test?
+            DSL.using(new MockConnection(testMocker), MYSQL):
+            DSL.using(new DefaultConnectionProvider(DriverManager.getConnection(url, username, password)), MYSQL);
+  }
+
+}
 

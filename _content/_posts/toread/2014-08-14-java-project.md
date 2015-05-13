@@ -6,6 +6,21 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", web, javascript, css]
 ---
 
+
+[并发编程模型](http://ifeve.com/%e5%b9%b6%e5%8f%91%e7%bc%96%e7%a8%8b%e6%a8%a1%e5%9e%8b/)
+
+[Java代码到字节码——第一部分](http://ifeve.com/javacodetobytecode-partone/)
+
+[JVM内部原理](http://ifeve.com/jvm-internals/)
+
+[IntelliJ IDEA的光芒会盖过Eclipse吗](http://www.iteye.com/news/30476)
+
+[最简单例子图解JVM内存分配和回收](http://ifeve.com/a-simple-example-demo-jvm-allocation-and-gc/)
+
+[阿姆达尔定律](http://ifeve.com/amdahls-law/)
+
+[非阻塞算法](http://ifeve.com/non-blocking-algorithms/)
+
 [Java中不同的并发实现的性能比较](http://ifeve.com/forkjoin-framework-vs-parallel-streams-vs-executorservice-the-ultimate-benchmark/)
 
 https://github.com/akullpp/awesome-java
