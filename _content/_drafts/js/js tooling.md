@@ -63,9 +63,19 @@ proxy
 http://www.cnblogs.com/huang0925/archive/2013/05/17/3083207.html
 
 bower proxy
+在工程根目录增加 .bowerrc 文件，内容是
+{
+"directory":"library",
+"proxy":"http://127.0.0.1:8888/",
+"https-proxy":"http://127.0.0.1:8888/"
+}
+
+
+
 http://stackoverflow.com/questions/18359887/bower-proxy-configuration
 http://stackoverflow.com/questions/21705091/bower-behind-a-proxy
 
+http://stackoverflow.com/questions/21750804/bower-calls-blocked-by-corporate-proxy
 
 
 

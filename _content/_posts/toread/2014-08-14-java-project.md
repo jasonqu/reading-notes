@@ -6,6 +6,13 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", web, javascript, css]
 ---
 
+[如何为可扩展系统进行Socket编程](http://www.iteye.com/news/30572)
+
+[通过JVM日志来进行安全点分析](http://ifeve.com/logging-stop-the-world-pauses-in-jvm/)
+
+[关于Java框架Vert.x的几点思考](http://www.iteye.com/news/30561)
+
+[JAVA的内存模型及结构](http://ifeve.com/under-the-hood-runtime-data-areas-javas-memory-model/)
 
 [并发编程模型](http://ifeve.com/%e5%b9%b6%e5%8f%91%e7%bc%96%e7%a8%8b%e6%a8%a1%e5%9e%8b/)
 
