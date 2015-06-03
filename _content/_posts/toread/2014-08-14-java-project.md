@@ -6,6 +6,11 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", web, javascript, css]
 ---
 
+[深入浅出ClassLoader（译）](http://ifeve.com/%e6%b7%b1%e5%85%a5%e6%b5%85%e5%87%baclassloader%ef%bc%88%e8%af%91%ef%bc%89/)
+finished 
+
+[稳定模式在RESTful架构中的应用](http://www.iteye.com/news/30600)
+
 [如何为可扩展系统进行Socket编程](http://www.iteye.com/news/30572)
 
 [通过JVM日志来进行安全点分析](http://ifeve.com/logging-stop-the-world-pauses-in-jvm/)

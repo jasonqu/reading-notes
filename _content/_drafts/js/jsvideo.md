@@ -54,3 +54,27 @@ http://www.html5rocks.com/en/tutorials/video/basics/
 
 fiddler
 http://www.leggetter.co.uk/2010/03/19/using-fiddler-to-help-develop-cross-domain-capable-javascript-web-applications.html
+
+
+
+https://developer.apple.com/library/safari/documentation/AudioVideo/Conceptual/Using_HTML5_Audio_Video/ControllingMediaWithJavaScript/ControllingMediaWithJavaScript.html#//apple_ref/doc/uid/TP40009523-CH3-SW4
+
+http://www.ibm.com/developerworks/cn/web/wa-ioshtml5/
+
+https://gist.github.com/millermedeiros/891886
+
+http://stackoverflow.com/questions/10235919/the-canplay-canplaythrough-events-for-an-html5-video-are-not-called-on-firefox
+
+http://www.w3cschool.cc/tags/av-event-canplaythrough.html
+
+
+
+
+
+
+
+
+
+
+
+
