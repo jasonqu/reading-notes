@@ -6,6 +6,18 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", web, javascript, css]
 ---
 
+[[译]Inside NGINX: How We Designed for Performance & Scale](http://ifeve.com/inside-nginx-how-we-designed-for-performance-scale/)
+
+[Java内存模型](http://ifeve.com/java-memory-model-6/)
+
+[什么是垃圾回收](http://www.iteye.com/news/30630)
+
+[戏（细）说Executor框架线程池任务执行全过程（上）](http://ifeve.com/executor-framework-thread-pool-task-execution-part-01/)
+
+[戏（细）说Executor框架线程池任务执行全过程（下）](http://ifeve.com/executor-framework-thread-pool-task-execution-part-02/)
+
+[Java PermGen 去哪里了?](http://ifeve.com/java-permgen-removed/)
+
 [深入浅出ClassLoader（译）](http://ifeve.com/%e6%b7%b1%e5%85%a5%e6%b5%85%e5%87%baclassloader%ef%bc%88%e8%af%91%ef%bc%89/)
 finished 
 

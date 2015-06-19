@@ -6,6 +6,11 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", project]
 ---
 
+git
+《Git 两分钟指南》、《写给 Git 初学者的 7 个建议》、《图解 Git /图形化的 Git 参考手册》、《给 Git 中级用户的 25 个小贴士》、《让Git 水平更上一层楼的 10 个小贴士》。）
+
+[NoSQL数据库的分布式算法](http://www.iteye.com/news/30641)
+
 [Neutron的软件架构](http://www.iteye.com/news/30458)
 
 [人工智能(AI)资料大全](http://www.techug.com/awesome-artificial-intelligence)

@@ -30,4 +30,5 @@ https://pixelfear.com/blog/using-prism-within-markdown
 
 [现代、简单的前端工作流-3-](http://894mayo.cc/modern-front-end-workflow/)
 
-
+如何简单地把一张相片处理成低多边形 Low Poly 3D 风格效果？
+http://www.zhihu.com/question/20875750
