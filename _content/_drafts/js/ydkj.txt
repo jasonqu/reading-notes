@@ -1,0 +1,389 @@
+https://github.com/getify/You-Dont-Know-JS
+
+# You Don't Know JS: Up & Going
+
+## ch1
+
+### Scope
+
+Programming has a term for this concept: scope (technically called lexical scope). In JavaScript, each function gets its own scope. Scope is basically a collection of variables as well as the rules for how those variables are accessed by name. Only code inside that function can access that function's scoped variables.
+
+```
+function outer() {
+    var a = 1;
+
+    function inner() {
+        var b = 2;
+
+        // we can access both `a` and `b` here
+        console.log( a + b );   // 3
+    }
+
+    inner();
+
+    // we can only access `a` here
+    console.log( a );           // 1
+}
+
+outer();
+```
+
+Lexical scope rules say that code in one scope can access variables of either that scope or any scope outside of it.
+
+
+## ch2
+####Coercion
+
+Here's an example of explicit coercion:
+
+var a = "42";
+
+var b = Number( a );
+
+a;              // "42"
+b;              // 42 -- the number!
+And here's an example of implicit coercion:
+
+var a = "42";
+
+var b = a * 1;  // "42" implicitly coerced to 42 here
+
+a;              // "42"
+b;              // 42 -- the number!
+
+emca5
+http://www.ecma-international.org/ecma-262/5.1/
+
+#### Hoisting
+```
+var a = 2;
+
+foo();                  // works because `foo()`
+                        // declaration is "hoisted"
+
+function foo() {
+    a = 3;
+
+    console.log( a );   // 3
+
+    var a;              // declaration is "hoisted"
+                        // to the top of `foo()`
+}
+
+console.log( a );   // 2
+```
+
+#### Nested Scopes
+
+ES6 let
+```
+function foo() {
+    var a = 1;
+
+    if (a >= 1) {
+        let b = 2;
+
+        while (b < 5) {
+            let c = b * 2;
+            b++;
+
+            console.log( a + c );
+        }
+    }
+}
+
+foo();
+// 5 7 9
+```
+
+### Immediately Invoked Function Expressions (IIFEs)
+```
+(function IIFE(){
+    console.log( "Hello!" );
+})();
+// "Hello!"
+```
+
+Because an IIFE is just a function, and functions create variable scope, using an IIFE in this fashion is often used to declare variables that won't affect the surrounding code outside the IIFE:
+```
+var a = 42;
+
+(function IIFE(){
+    var a = 10;
+    console.log( a );   // 10
+})();
+
+console.log( a );       // 42
+```
+
+IIFEs can also have return values:
+```
+var x = (function IIFE(){
+    return 42;
+})();
+
+x;  // 42
+```
+
+### Closure
+
+Closure is one of the most important, and often least understood, concepts in JavaScript.
+
+You can think of closure as a way to "remember" and continue to access a function's scope (its variables) even once the function has finished running.
+
+```
+function makeAdder(x) {
+    // parameter `x` is an inner variable
+
+    // inner function `add()` uses `x`, so
+    // it has a "closure" over it
+    function add(y) {
+        return y + x;
+    };
+
+    return add;
+}
+
+// `plusOne` gets a reference to the inner `add(..)`
+// function with closure over the `x` parameter of
+// the outer `makeAdder(..)`
+var plusOne = makeAdder( 1 );
+
+// `plusTen` gets a reference to the inner `add(..)`
+// function with closure over the `x` parameter of
+// the outer `makeAdder(..)`
+var plusTen = makeAdder( 10 );
+
+plusOne( 3 );       // 4  <-- 1 + 3
+plusOne( 41 );      // 42 <-- 1 + 41
+
+plusTen( 13 );      // 23 <-- 10 + 13
+```
+
+More on how this code works:
+
+1. When we call makeAdder(1), we get back a reference to its inner add(..) that remembers x as 1. We call this function reference plusOne(..).
+2. When we call makeAdder(10), we get back another reference to its inner add(..) that remembers x as 10. We call this function reference plusTen(..).
+3. When we call plusOne(3), it adds 3 (its inner y) to the 1 (remembered by x), and we get 4 as the result.
+4. When we call plusTen(13), it adds 13 (its inner y) to the 10 (remembered by x), and we get 23 as the result.
+
+
+#### Modules
+
+The most common usage of closure in JavaScript is the module pattern. Modules let you define private implementation details (variables, functions) that are hidden from the outside world, as well as a public API that is accessible from the outside.
+
+```
+function User(){
+    var username, password;
+
+    function doLogin(user,pw) {
+        username = user;
+        password = pw;
+
+        // do the rest of the login work
+    }
+
+    var publicAPI = {
+        login: doLogin
+    };
+
+    return publicAPI;
+}
+
+// create a `User` module instance
+var fred = User();
+
+fred.login( "fred", "12Battery34!" );
+```
+
+The User() function serves as an outer scope that holds the variables username and password, as well as the inner doLogin() function; these are all private inner details of this User module that cannot be accessed from the outside world.
+
+Warning: We are not calling new User() here, on purpose, despite the fact that probably seems more common to most readers. User() is just a function, not a class to be instantiated, so it's just called normally. Using new would be inappropriate and actually waste resources.
+
+Executing User() creates an instance of the User module -- a whole new scope is created, and thus a whole new copy of each of these inner variables/functions. We assign this instance to fred. If we run User() again, we'd get a new instance entirely separate from fred.
+
+The inner doLogin() function has a closure over username and password, meaning it will retain its access to them even after the User() function finishes running.
+
+publicAPI is an object with one property/method on it, login, which is a reference to the inner doLogin() function. When we return publicAPI from User(), it becomes the instance we call fred.
+
+At this point, the outer User() function has finished executing. Normally, you'd think the inner variables like username and password have gone away. But here they have not, because there's a closure in the login() function keeping them alive.
+
+That's why we can call fred.login(..) -- the same as calling the inner doLogin(..) -- and it can still access username and password inner variables.
+
+There's a good chance that with just this brief glimpse at closure and the module pattern, some of it is still a bit confusing. That's OK! It takes some work to wrap your brain around it.
+
+From here, go read the Scope & Closures title of this series for a much more in-depth exploration.
+
+
+### this Identifier
+
+Another very commonly misunderstood concept in JavaScript is the this identifier. 
+
+While it may often seem that this is related to "object-oriented patterns," in JS this is a different mechanism.
+
+If a function has a this reference inside it, that this reference usually points to an object. But which object it points to depends on how the function was called.
+
+It's important to realize that this does not refer to the function itself, as is the most common misconception.
+
+```
+function foo() {
+    console.log( this.bar );
+}
+
+var bar = "global";
+
+var obj1 = {
+    bar: "obj1",
+    foo: foo
+};
+
+var obj2 = {
+    bar: "obj2"
+};
+
+// --------
+
+foo();              // "global"
+obj1.foo();         // "obj1"
+foo.call( obj2 );   // "obj2"
+new foo();          // undefined
+```
+
+### Prototypes
+
+The prototype mechanism in JavaScript is quite complicated. 
+
+When you reference a property on an object, if that property doesn't exist, JavaScript will automatically use that object's internal prototype reference to find another object to look for the property on. You could think of this almost as a fallback if the property is missing.
+
+The internal prototype reference linkage from one object to its fallback happens at the time the object is created. The simplest way to illustrate it is with a built-in utility called Object.create(..).
+
+```
+var foo = {
+    a: 42
+};
+
+// create `bar` and link it to `foo`
+var bar = Object.create( foo );
+
+bar.b = "hello world";
+
+bar.b;      // "hello world"
+bar.a;      // 42 <-- delegated to `foo`
+```
+
+This linkage may seem like a strange feature of the language. The most common way this feature is used -- and I would argue, abused -- is to try to emulate/fake a "class" mechanism with "inheritance."
+
+But a more natural way of applying prototypes is a pattern called "behavior delegation," where you intentionally design your linked objects to be able to delegate from one to the other for parts of the needed behavior.
+
+
+
+### Old & New
+
+Some of the JS features we've already covered, and certainly many of the features covered in the rest of this series, are newer additions and will not necessarily be available in older browsers. In fact, some of the newest features in the specification aren't even implemented in any stable browsers yet.
+
+So, what do you do with the new stuff? Do you just have to wait around for years or decades for all the old browsers to fade into obscurity?
+兼容处理
+
+####Polyfilling
+
+The word "polyfill" is an invented term (by Remy Sharp) (https://remysharp.com/2010/10/08/what-is-a-polyfill) used to refer to taking the definition of a newer feature and producing a piece of code that's equivalent to the behavior, but is able to run in older JS environments.
+
+For example, ES6 defines a utility called Number.isNaN(..) to provide an accurate non-buggy check for NaN values, deprecating the original isNaN(..) utility. But it's easy to polyfill that utility so that you can start using it in your code regardless of whether the end user is in an ES6 browser or not.
+
+Consider:
+
+···
+if (!Number.isNaN) {
+    Number.isNaN = function isNaN(x) {
+        return x !== x;
+    };
+}
+···
+
+Not all new features are fully polyfillable. Sometimes most of the behavior can be polyfilled, but there are still small deviations. You should be really, really careful in implementing a polyfill yourself, to make sure you are adhering to the specification as strictly as possible.
+
+Or better yet, use an already vetted set of polyfills that you can trust, such as those provided by ES5-Shim (https://github.com/es-shims/es5-shim) and ES6-Shim (https://github.com/es-shims/es6-shim).
+
+#### Transpiling
+TODO
+function foo() {
+    var a = arguments[0] !== (void 0) ? arguments[0] : 2;
+    console.log( a );
+}
+
+Babel (https://babeljs.io) (formerly 6to5): Transpiles ES6+ into ES5
+Traceur (https://github.com/google/traceur-compiler): Transpiles ES6, ES7, and beyond into ES5
+
+### Non-JavaScript
+DOM "host object."
+
+## ch3
+
+### Scope & Closures
+
+The JS engine compiles your code right before (and sometimes during!) execution. So we use some deeper understanding of the compiler's approach to our code to understand how it finds and deals with variable and function declarations. Along the way, we see the typical metaphor for JS variable scope management, "Hoisting."
+
+This critical understanding of "lexical scope" is what we then base our exploration of closure on for the last chapter of the book. Closure is perhaps the single most important concept in all of JS, but if you haven't first grasped firmly how scope works, closure will likely remain beyond your grasp.
+
+One important application of closure is the module pattern, as we briefly introduced in this book in Chapter 2. The module pattern is perhaps the most prevalent code organization pattern in all of JavaScript; deep understanding of it should be one of your highest priorities.
+
+### this & Object Prototypes
+TODO
+
+。。。
+
+
+# You Don't Know JS: Scope & Closures
+## Chapter 1: What is Scope?
+
+#### The Cast
+
+Let's meet the cast of characters that interact to process the program var a = 2;, so we understand their conversations that we'll listen in on shortly:
+
+1. Engine: responsible for start-to-finish compilation and execution of our JavaScript program.
+
+2. Compiler: one of Engine's friends; handles all the dirty work of parsing and code-generation (see previous section).
+
+3. Scope: another friend of Engine; collects and maintains a look-up list of all the declared identifiers (variables), and enforces a strict set of rules as to how these are accessible to currently executing code.
+
+For you to fully understand how JavaScript works, you need to begin to think like Engine (and friends) think, ask the questions they ask, and answer those questions the same.
+
+
+To summarize: two distinct actions are taken for a variable assignment: First, Compiler declares a variable (if not previously declared in the current scope), and second, when executing, Engine looks up the variable in Scope and assigns to it, if found.
+
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions_and_function_scope/Strict_mode
+
+
+## Chapter 2: Lexical Scope
+
+There are two predominant models for how scope works. The first of these is by far the most common, used by the vast majority of programming languages. It's called Lexical Scope, and we will examine it in-depth. The other model, which is still used by some languages (such as Bash scripting, some modes in Perl, etc.) is called Dynamic Scope.
+
+### Lex-time
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
