@@ -6,6 +6,10 @@ tagline: "personal notes for later use"
 tags : [todo, "to read", web, javascript, css]
 ---
 
+[10种简单的Java性能优化](http://www.iteye.com/news/30665)
+
+[《JVM故障诊断指南》之1 —— JVM概览与介绍](http://ifeve.com/jvm-troubleshooting-guide-1/)
+
 [[译]Inside NGINX: How We Designed for Performance & Scale](http://ifeve.com/inside-nginx-how-we-designed-for-performance-scale/)
 
 [Java内存模型](http://ifeve.com/java-memory-model-6/)

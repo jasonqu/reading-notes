@@ -32,3 +32,23 @@ https://pixelfear.com/blog/using-prism-within-markdown
 
 如何简单地把一张相片处理成低多边形 Low Poly 3D 风格效果？
 http://www.zhihu.com/question/20875750
+
+
+
+
+table word wrap and width setting
+http://stackoverflow.com/questions/1258416/word-wrap-in-an-html-table
+http://stackoverflow.com/questions/928849/setting-table-column-width
+
+
+
+
+
+
+
+
+
+
+
+
+

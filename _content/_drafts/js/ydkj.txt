@@ -704,60 +704,168 @@ else {
 
 ## Chapter 5: Scope Closure
 
+Closure is when a function is able to remember and access its lexical scope even when that function is executing outside its lexical scope.
 
+```
+function foo() {
+    var a = 2;
 
+    function bar() {
+        console.log( a ); // 2
+    }
 
+    bar();
+}
 
+foo();
+```
 
+Is this "closure"?
 
+Well, technically... perhaps. But by our what-you-need-to-know definition above... not exactly. I think the most accurate way to explain bar() referencing a is via lexical scope look-up rules, and those rules are only (an important!) part of what closure is.
 
+```
+function foo() {
+    var a = 2;
 
+    function bar() {
+        console.log( a );
+    }
 
+    return bar;
+}
 
+var baz = foo();
 
+baz(); // 2 -- Whoa, closure was just observed, man.
+```
 
+After foo() executed, normally we would expect that the entirety of the inner scope of foo() would go away, because we know that the Engine employs a Garbage Collector that comes along and frees up memory once it's no longer in use. Since it would appear that the contents of foo() are no longer in use, it would seem natural that they should be considered gone.
 
+But the "magic" of closures does not let this happen. That inner scope is in fact still "in use", and thus does not go away. Who's using it? The function bar() itself.
 
+By virtue of where it was declared, bar() has a lexical scope closure over that inner scope of foo(), which keeps that scope alive for bar() to reference at any later time.
 
+bar() still has a reference to that scope, and that reference is called closure.
 
+The function is being invoked well outside of its author-time lexical scope. Closure lets the function continue to access the lexical scope it was defined in at author-time.
 
+Of course, any of the various ways that functions can be passed around as values, and indeed invoked in other locations, are all examples of observing/exercising closure.
 
+```
+function foo() {
+    var a = 2;
 
+    function baz() {
+        console.log( a ); // 2
+    }
 
+    bar( baz );
+}
 
+function bar(fn) {
+    fn(); // look ma, I saw closure!
+}
+```
 
+```
+function wait(message) {
 
+    setTimeout( function timer(){
+        console.log( message );
+    }, 1000 );
 
+}
 
+wait( "Hello, closure!" );
+```
 
+Note: Chapter 3 introduced the IIFE pattern. While it is often said that IIFE (alone) is an example of observed closure, I would somewhat disagree, by our definition above.
 
+```
+var a = 2;
 
+(function IIFE(){
+    console.log( a );
+})();
+```
 
+This code "works", but it's not strictly an observation of closure. Why? Because the function (which we named "IIFE" here) is not executed outside its lexical scope. It's still invoked right there in the same scope as it was declared (the enclosing/global scope that also holds a). a is found via normal lexical scope look-up, not really via closure.
 
+### Loops + Closure
 
+```
+for (var i=1; i<=5; i++) {
+    setTimeout( function timer(){
+        console.log( i );
+    }, i*1000 );
+}
+```
 
+In fact, if you run this code, you get "6" printed out 5 times, at the one-second intervals.
 
+What's missing is that we are trying to imply that each iteration of the loop "captures" its own copy of i, at the time of the iteration. But, the way scope works, all 5 of those functions, though they are defined separately in each loop iteration, all are closed over the same shared global scope, which has, in fact, only one i in it.
 
+Put that way, of course all functions share a reference to the same i. Something about the loop structure tends to confuse us into thinking there's something else more sophisticated at work. There is not. There's no difference than if each of the 5 timeout callbacks were just declared one right after the other, with no loop at all.
 
+```
+for (var i=1; i<=5; i++) {
+    (function(){
+        setTimeout( function timer(){
+            console.log( i );
+        }, i*1000 );
+    })();
+}
+```
 
+It's not enough to have a scope to close over if that scope is empty. Look closely. Our IIFE is just an empty do-nothing scope. It needs something in it to be useful to us.
 
+```
+for (var i=1; i<=5; i++) {
+    (function(){
+        var j = i;
+        setTimeout( function timer(){
+            console.log( j );
+        }, j*1000 );
+    })();
+}
+```
 
+huo 
 
+```
+for (var i=1; i<=5; i++) {
+    (function(j){
+        setTimeout( function timer(){
+            console.log( j );
+        }, j*1000 );
+    })( i );
+}
+```
+Eureka! It works!
 
+##### Block Scoping Revisited
 
+es6 new 特性
 
+```
+for (var i=1; i<=5; i++) {
+    let j = i; // yay, block-scope for closure!
+    setTimeout( function timer(){
+        console.log( j );
+    }, j*1000 );
+}
+```
 
+```
+for (let i=1; i<=5; i++) {
+    setTimeout( function timer(){
+        console.log( i );
+    }, i*1000 );
+}
+```
 
-
-
-
-
-
-
-
-
-
-
+### Modules
 
 
 
