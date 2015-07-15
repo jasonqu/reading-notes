@@ -867,6 +867,561 @@ for (let i=1; i<=5; i++) {
 
 ### Modules
 
+example
+```
+function CoolModule() {
+    var something = "cool";
+    var another = [1, 2, 3];
+
+    function doSomething() {
+        console.log( something );
+    }
+
+    function doAnother() {
+        console.log( another.join( " ! " ) );
+    }
+
+    return {
+        doSomething: doSomething,
+        doAnother: doAnother
+    };
+}
+
+var foo = CoolModule();
+
+foo.doSomething(); // cool
+foo.doAnother(); // 1 ! 2 ! 3
+```
+
+Firstly, CoolModule() is just a function, but it has to be invoked for there to be a module instance created. Without the execution of the outer function, the creation of the inner scope and the closures would not occur.
+
+Secondly, the CoolModule() function returns an object, denoted by the object-literal syntax { key: value, ... }. The object we return has references on it to our inner functions, but not to our inner data variables. We keep those hidden and private. It's appropriate to think of this object return value as essentially a public API for our module.
+
+singleton
+
+```
+var foo = (function CoolModule() {
+    var something = "cool";
+    var another = [1, 2, 3];
+
+    function doSomething() {
+        console.log( something );
+    }
+
+    function doAnother() {
+        console.log( another.join( " ! " ) );
+    }
+
+    return {
+        doSomething: doSomething,
+        doAnother: doAnother
+    };
+})();
+
+foo.doSomething(); // cool
+foo.doAnother(); // 1 ! 2 ! 3
+```
+
+Modules are just functions, so they can receive parameters:
+
+```
+function CoolModule(id) {
+    function identify() {
+        console.log( id );
+    }
+
+    return {
+        identify: identify
+    };
+}
+
+var foo1 = CoolModule( "foo 1" );
+var foo2 = CoolModule( "foo 2" );
+
+foo1.identify(); // "foo 1"
+foo2.identify(); // "foo 2"
+```
+
+Another slight but powerful variation on the module pattern is to name the object you are returning as your public API:
+
+```
+var foo = (function CoolModule(id) {
+    function change() {
+        // modifying the public API
+        publicAPI.identify = identify2;
+    }
+
+    function identify1() {
+        console.log( id );
+    }
+
+    function identify2() {
+        console.log( id.toUpperCase() );
+    }
+
+    var publicAPI = {
+        change: change,
+        identify: identify1
+    };
+
+    return publicAPI;
+})( "foo module" );
+
+foo.identify(); // foo module
+foo.change();
+foo.identify(); // FOO MODULE
+```
+
+By retaining an inner reference to the public API object inside your module instance, you can modify that module instance from the inside, including adding and removing methods, properties, and changing their values.
+
+#### Modern Modules
+
+Various module dependency loaders/managers essentially wrap up this pattern of module definition into a friendly API. Rather than examine any one particular library, let me present a very simple proof of concept for illustration purposes (only):
+
+```
+var MyModules = (function Manager() {
+    var modules = {};
+
+    function define(name, deps, impl) {
+        for (var i=0; i<deps.length; i++) {
+            deps[i] = modules[deps[i]];
+        }
+        modules[name] = impl.apply( impl, deps );
+    }
+
+    function get(name) {
+        return modules[name];
+    }
+
+    return {
+        define: define,
+        get: get
+    };
+})();
+```
+
+The key part of this code is modules[name] = impl.apply(impl, deps). This is invoking the definition wrapper function for a module (passing in any dependencies), and storing the return value, the module's API, into an internal list of modules tracked by name.
+
+And here's how I might use it to define some modules:
+
+```
+MyModules.define( "bar", [], function(){
+    function hello(who) {
+        return "Let me introduce: " + who;
+    }
+
+    return {
+        hello: hello
+    };
+} );
+
+MyModules.define( "foo", ["bar"], function(bar){
+    var hungry = "hippo";
+
+    function awesome() {
+        console.log( bar.hello( hungry ).toUpperCase() );
+    }
+
+    return {
+        awesome: awesome
+    };
+} );
+
+var bar = MyModules.get( "bar" );
+var foo = MyModules.get( "foo" );
+
+console.log(
+    bar.hello( "hippo" )
+); // Let me introduce: hippo
+
+foo.awesome(); // LET ME INTRODUCE: HIPPO
+```
+
+Both the "foo" and "bar" modules are defined with a function that returns a public API. "foo" even receives the instance of "bar" as a dependency parameter, and can use it accordingly.
+
+Spend some time examining these code snippets to fully understand the power of closures put to use for our own good purposes. The key take-away is that there's not really any particular "magic" to module managers. They fulfill both characteristics of the module pattern I listed above: invoking a function definition wrapper, and keeping its return value as the API for that module.
+
+In other words, modules are just modules, even if you put a friendly wrapper tool on top of them.
+
+#### Future Modules
+
+TODO
+
+
+
+## Appendix A: Dynamic Scope
+
+## Appendix B: Polyfilling Block Scope
+
+## Appendix C: Lexical-this
+
+important
+
+
+
+# You Don't Know JS: this & Object Prototypes
+
+## Chapter 1: this Or That?
+
+Let's try to illustrate the motivation and utility of this:
+
+```
+function identify() {
+    return this.name.toUpperCase();
+}
+
+function speak() {
+    var greeting = "Hello, I'm " + identify.call( this );
+    console.log( greeting );
+}
+
+var me = {
+    name: "Kyle"
+};
+
+var you = {
+    name: "Reader"
+};
+
+identify.call( me ); // KYLE
+identify.call( you ); // READER
+
+speak.call( me ); // Hello, I'm KYLE
+speak.call( you ); // Hello, I'm READER
+```
+
+This code snippet allows the identify() and speak() functions to be re-used against multiple context (me and you) objects, rather than needing a separate version of the function for each object.
+
+Instead of relying on this, you could have explicitly passed in a context object to both identify() and speak().
+
+```
+function identify(context) {
+    return context.name.toUpperCase();
+}
+
+function speak(context) {
+    var greeting = "Hello, I'm " + identify( context );
+    console.log( greeting );
+}
+
+identify( you ); // READER
+speak( me ); // Hello, I'm KYLE
+```
+
+However, the this mechanism provides a more elegant way of implicitly "passing along" an object reference, leading to cleaner API design and easier re-use.
+
+The more complex your usage pattern is, the more clearly you'll see that passing context around as an explicit parameter is often messier than passing around a this context. When we explore objects and prototypes, you will see the helpfulness of a collection of functions being able to automatically reference the proper context object.
+
+### Confusions
+
+Developers new to JS's mechanisms often think that referencing the function as an object (all functions in JavaScript are objects!) lets you store state (values in properties) between function calls. While this is certainly possible and has some limited uses, the rest of the book will expound on many other patterns for better places to store state besides the function object.
+
+But for just a moment, we'll explore that pattern, to illustrate how this doesn't let a function get a reference to itself like we might have assumed.
+
+Consider the following code, where we attempt to track how many times a function (foo) was called:
+
+```
+function foo(num) {
+    console.log( "foo: " + num );
+
+    // keep track of how many times `foo` is called
+    this.count++;
+}
+
+foo.count = 0;
+
+var i;
+
+for (i=0; i<10; i++) {
+    if (i > 5) {
+        foo( i );
+    }
+}
+// foo: 6
+// foo: 7
+// foo: 8
+// foo: 9
+
+// how many times was `foo` called?
+console.log( foo.count ); // 0 -- WTF?
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# You Don't Know JS: Types & Grammar
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
