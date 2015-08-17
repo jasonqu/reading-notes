@@ -185,3 +185,54 @@ public class JooqHelper {
 
 }
 
+
+
+
+
+
+jooq 快速insert
+http://blog.jooq.org/2014/01/16/what-you-didnt-know-about-jdbc-batch/
+MySQL 5%
+MySQL 332% (with rewriteBatchedStatements=true)
+
+http://stackoverflow.com/questions/26307760/mysql-and-jdbc-with-rewritebatchedstatements-true
+jdbc:mysql://myhost:3306/mydb?rewriteBatchedStatements=true
+
+
+
+http://www.jooq.org/doc/3.6/manual/sql-execution/batch-execution/
+
+// 1. several queries
+// ------------------
+create.batch(
+  create.insertInto(AUTHOR, ID, FIRST_NAME, LAST_NAME).values(1, "Erich"  , "Gamma"    ),
+  create.insertInto(AUTHOR, ID, FIRST_NAME, LAST_NAME).values(2, "Richard", "Helm"     ),
+  create.insertInto(AUTHOR, ID, FIRST_NAME, LAST_NAME).values(3, "Ralph"  , "Johnson"  ),
+  create.insertInto(AUTHOR, ID, FIRST_NAME, LAST_NAME).values(4, "John"   , "Vlissides"))
+.execute();
+
+// 2. a single query
+// -----------------
+create.batch(create.insertInto(AUTHOR, ID, FIRST_NAME, LAST_NAME  ).values((Integer) null, null, null))
+      .bind(                           1 , "Erich"   , "Gamma"    )
+      .bind(                           2 , "Richard" , "Helm"     )
+      .bind(                           3 , "Ralph"   , "Johnson"  )
+      .bind(                           4 , "John"    , "Vlissides")
+      .execute();
+
+On Crud
+// Fetch a bunch of books
+List<BookRecord> books = create.fetch(BOOK);
+
+// Modify the above books, and add some new ones:
+modify(books);
+addMore(books);
+
+// Batch-update and/or insert all of the above books
+create.batchStore(books);
+
+
+
+http://www.jooq.org/doc/2.5/manual/sql-building/sql-statements/insert-statement/
+The synthetic ON DUPLICATE KEY IGNORE clause
+

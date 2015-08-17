@@ -1,0 +1,35 @@
+“Submit is not a function” error in JavaScript
+http://stackoverflow.com/questions/833032/submit-is-not-a-function-error-in-javascript
+http://stackoverflow.com/questions/6525790/javascript-submit-is-not-a-function
+
+
+
+
+
+
+
+
+
+
+
+
+
+Confirm form submission using bootbox.confirm()
+http://stackoverflow.com/questions/11313586/confirm-form-submission-using-bootbox-confirm
+
+ie 和 chrome的不同
+form提交的时候，chrome会包含“disabled”属性，ie不会
+What's the difference between disabled=“disabled” and readonly=“readonly” for HTML form input fields?
+http://stackoverflow.com/questions/7730695/whats-the-difference-between-disabled-disabled-and-readonly-readonly-for-ht
+
+
+
+JavaScript
+http://eloquentjavascript.net/1st_edition/chapter6.html
+http://jhusain.github.io/learnrx/
+
+
+
+node
+https://cnodejs.org/getstart
+
