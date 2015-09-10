@@ -4,97 +4,8 @@ https://github.com/getify/You-Dont-Know-JS
 
 ## ch1
 
-### Scope
-
-Programming has a term for this concept: scope (technically called lexical scope). In JavaScript, each function gets its own scope. Scope is basically a collection of variables as well as the rules for how those variables are accessed by name. Only code inside that function can access that function's scoped variables.
-
-```
-function outer() {
-    var a = 1;
-
-    function inner() {
-        var b = 2;
-
-        // we can access both `a` and `b` here
-        console.log( a + b );   // 3
-    }
-
-    inner();
-
-    // we can only access `a` here
-    console.log( a );           // 1
-}
-
-outer();
-```
-
-Lexical scope rules say that code in one scope can access variables of either that scope or any scope outside of it.
 
 
-## ch2
-####Coercion
-
-Here's an example of explicit coercion:
-
-var a = "42";
-
-var b = Number( a );
-
-a;              // "42"
-b;              // 42 -- the number!
-And here's an example of implicit coercion:
-
-var a = "42";
-
-var b = a * 1;  // "42" implicitly coerced to 42 here
-
-a;              // "42"
-b;              // 42 -- the number!
-
-emca5
-http://www.ecma-international.org/ecma-262/5.1/
-
-#### Hoisting
-```
-var a = 2;
-
-foo();                  // works because `foo()`
-                        // declaration is "hoisted"
-
-function foo() {
-    a = 3;
-
-    console.log( a );   // 3
-
-    var a;              // declaration is "hoisted"
-                        // to the top of `foo()`
-}
-
-console.log( a );   // 2
-```
-
-#### Nested Scopes
-
-ES6 let
-```
-function foo() {
-    var a = 1;
-
-    if (a >= 1) {
-        let b = 2;
-
-        while (b < 5) {
-            let c = b * 2;
-            b++;
-
-            console.log( a + c );
-        }
-    }
-}
-
-foo();
-// 5 7 9
-```
 
 ### Immediately Invoked Function Expressions (IIFEs)
 ```
@@ -317,6 +228,20 @@ Traceur (https://github.com/google/traceur-compiler): Transpiles ES6, ES7, and b
 ### Non-JavaScript
 DOM "host object."
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## ch3
 
 ### Scope & Closures
@@ -379,82 +304,9 @@ No matter where a function is invoked from, or even how it is invoked, its lexic
 
 The lexical scope look-up process only applies to first-class identifiers, such as the a, b, and c. If you had a reference to foo.bar.baz in a piece of code, the lexical scope look-up would apply to finding the foo identifier, but once it locates that variable, object property-access rules take over to resolve the bar and baz properties, respectively.
 
-### Cheating Lexical
-eval with
-cheating lexical scope leads to poorer performance.
 
-## Chapter 3: Function vs. Block Scope
 
-As we explored in Chapter 2, scope consists of a series of "bubbles" that each act as a container or bucket, in which identifiers (variables, functions) are declared. These bubbles nest neatly inside each other, and this nesting is defined at author-time.
 
-But what exactly makes a new bubble? Is it only the function? Can other structures in JavaScript create bubbles of scope?
-
-### Scope From Functions
-
-The most common answer to those questions is that JavaScript has function-based scope. 
-
-#### Hiding In Plain Scope
-
- take any arbitrary section of code you've written, and wrap a function declaration around it, which in effect "hides" the code.
-
-There's a variety of reasons motivating this scope-based hiding. They tend to arise from the software design principle "Principle of Least Privilege" [^note-leastprivilege], also sometimes called "Least Authority" or "Least Exposure". This principle states that in the design of software, such as the API for a module/object, you should expose only what is minimally necessary, and "hide" everything else.
-
-```
-function doSomething(a) {
-    b = a + doSomethingElse( a * 2 );
-
-    console.log( b * 3 );
-}
-
-function doSomethingElse(a) {
-    return a - 1;
-}
-
-var b;
-
-doSomething( 2 ); // 15
-```
-
-to
-
-A more "proper" design would hide these private details inside the scope of doSomething(..), such as:
-
-```
-function doSomething(a) {
-    function doSomethingElse(a) {
-        return a - 1;
-    }
-
-    var b;
-
-    b = a + doSomethingElse( a * 2 );
-
-    console.log( (b * 3) );
-}
-
-doSomething( 2 ); // 15
-```
-
-#### Collision Avoidance
-
-puzzle
-
-```
-function foo() {
-    function bar(a) {
-        i = 3; // changing the `i` in the enclosing scope's for-loop
-        console.log( a + i );
-    }
-
-    for (var i=0; i<10; i++) {
-        bar( i * 2 ); // oops, infinite loop ahead!
-    }
-}
-
-foo();
-```
-
-infinite loop
 
 #### Global "Namespaces"
 
@@ -478,40 +330,6 @@ It should be observed that these tools do not possess "magic" functionality that
 
 As such, you can code defensively and achieve the same results as the dependency managers do without actually needing to use them, if you so choose. See the Chapter 5 for more information about the module pattern.
 
-### Functions As Scopes
-
-```
-var a = 2;
-
-function foo() { // <-- insert this
-
-    var a = 3;
-    console.log( a ); // 3
-
-} // <-- and this
-foo(); // <-- and this
-
-console.log( a ); // 2
-```
-
-to
-
-```
-var a = 2;
-
-(function foo(){ // <-- insert this
-
-    var a = 3;
-    console.log( a ); // 3
-
-})(); // <-- and this
-
-console.log( a ); // 2
-```
-
-Compare the previous two snippets. In the first snippet, the name foo is bound in the enclosing scope, and we call it directly with foo(). In the second snippet, the name foo is not bound in the enclosing scope, but instead is bound only inside of its own function.
-
-In other words, (function foo(){ .. }) as an expression means the identifier foo is found only in the scope where the .. indicates, not in the outer scope. Hiding the name foo inside itself means it does not pollute the enclosing scope unnecessarily.
 
 #### IIFE, which stands for Immediately Invoked Function Expression.
 
@@ -578,128 +396,6 @@ var a = 2;
     console.log( global.a ); // 2
 
 });
-```
-
-### Blocks As Scopes
-
-with
-try/catch
-let
-const
-
-## Chapter 4: Hoisting
-Both function scope and block scope behave by the same rules in this regard: any variable declared within a scope is attached to that scope.
-
-puzzle time 
-```
-a = 2;
-
-var a;
-
-console.log( a );
-```
-
-```
-console.log( a );
-
-var a = 2;
-```
-
-### The Compiler Strikes Again
-
-So, the best way to think about things is that all declarations, both variables and functions, are processed first, before any part of your code is executed.
-
-The second statement, the assignment, is left in place for the execution phase.
-
-Only the declarations themselves are hoisted, while any assignments or other executable logic are left in place. 
-
-It's also important to note that hoisting is per-scope.
-
-```
-foo();
-
-function foo() {
-    console.log( a ); // undefined
-
-    var a = 2;
-}
-
-foo();
-```
-
-Function declarations are hoisted, as we just saw. But function expressions are not.
-
-```
-foo(); // not ReferenceError, but TypeError!
-
-var foo = function bar() {
-    // ...
-};
-```
-
-```
-foo(); // TypeError
-bar(); // ReferenceError
-
-var foo = function bar() {
-    // ...
-};
-```
-
-```
-var foo;
-
-foo(); // TypeError
-bar(); // ReferenceError
-
-foo = function() {
-    var bar = ...self...
-    // ...
-}
-```
-
-#### Functions First
-
-```
-foo(); // 1
-
-var foo;
-
-function foo() {
-    console.log( 1 );
-}
-
-foo = function() {
-    console.log( 2 );
-};
-```
-
-```
-foo(); // 3
-
-function foo() {
-    console.log( 1 );
-}
-
-var foo = function() {
-    console.log( 2 );
-};
-
-function foo() {
-    console.log( 3 );
-}
-```
-
-```
-foo(); // "b"
-
-var a = true;
-if (a) {
-   function foo() { console.log( "a" ); }
-}
-else {
-   function foo() { console.log( "b" ); }
-}
 ```
 
 ## Chapter 5: Scope Closure

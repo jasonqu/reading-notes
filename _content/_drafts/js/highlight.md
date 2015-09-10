@@ -22,7 +22,7 @@ http://karenwong.me/tutorials/2012/12/syntaxhighlighter-color-scheme-monokai/
 <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">moveTo</span><span class="hljs-params">(<span class="hljs-keyword">int</span> x, <span class="hljs-keyword">int</span> y, <span class="hljs-keyword">int</span> z)</span> </span>
 
 4、Prism.JS - 轻量级JavaScript代码高亮插件
-可定制，theme也可以有很多
+关键词分span，可定制，theme也可以有很多
 
 功能也可以定制，不过使用起来
 
@@ -44,7 +44,61 @@ http://sam-koblenski.blogspot.com/2014/06/a-barely-adequate-guide-to-syntax.html
 
 
 
+syntax highliter
 
+start
+http://www.cnblogs.com/mailingfeng/archive/2013/04/25/3042626.html
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>SyntaxHighlighter Build Test Page</title>
+    
+    <link type="text/css" rel="stylesheet" href="styles/shCore.css"/> <!--核心样式表(必选)-->
+    <link type="text/css" rel="stylesheet" href="styles/shThemeDefault.css"/> <!--主题样式表(多重样式选一)-->
+    
+    <script type="text/javascript" src="scripts/shCore.js"></script> <!--核心js脚本(必选)-->
+    <script type="text/javascript" src="scripts/shBrushBash.js"></script> <!--"Shell"脚本高亮规则js (必选,你的代码是什么语言的,就选什么js脚本-->
+    <script type="text/javascript" src="scripts/shBrushCpp.js"></script>
+    <script type="text/javascript" src="scripts/shBrushCSharp.js"></script>
+    <script type="text/javascript" src="scripts/shBrushCss.js"></script>
+    <script type="text/javascript" src="scripts/shBrushDelphi.js"></script>
+    <script type="text/javascript" src="scripts/shBrushDiff.js"></script>
+    <script type="text/javascript" src="scripts/shBrushGroovy.js"></script>
+    <script type="text/javascript" src="scripts/shBrushJava.js"></script>
+    <script type="text/javascript" src="scripts/shBrushJScript.js"></script>
+    <script type="text/javascript" src="scripts/shBrushPhp.js"></script>
+    <script type="text/javascript" src="scripts/shBrushPlain.js"></script>
+    <script type="text/javascript" src="scripts/shBrushPython.js"></script>
+    <script type="text/javascript" src="scripts/shBrushRuby.js"></script>
+    <script type="text/javascript" src="scripts/shBrushScala.js"></script>
+    <script type="text/javascript" src="scripts/shBrushSql.js"></script>
+    <script type="text/javascript" src="scripts/shBrushVb.js"></script>
+    <script type="text/javascript" src="scripts/shBrushXml.js"></script> <!--"XML"高亮规则js-->
+    
+
+    <script type="text/javascript">
+        SyntaxHighlighter.all(); //通过该js脚本来进行高亮处理;
+    </script>
+</head>
+
+<body >
+<h1>SyntaxHihglighter Test</h1>
+<p>This is a test file to insure that everything is working well.</p>
+
+<pre class="brush: xml"> <!--代码块需要使用<pre></pre> 或 <code></code>来包围, pre的class要设置为"brush: xml(你代码的语言)" -->
+function test() : String
+{
+    return 10;
+}
+
+<hello>
+    word!
+</hello>
+
+</pre>
+</html>
 
 
 

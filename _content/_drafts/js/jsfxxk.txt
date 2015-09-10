@@ -1,3 +1,12 @@
+
+
+JavaScript: The Good Parts
+https://www.youtube.com/watch?v=hQVTIJBZook
+
+
+
+
+
 “Submit is not a function” error in JavaScript
 http://stackoverflow.com/questions/833032/submit-is-not-a-function-error-in-javascript
 http://stackoverflow.com/questions/6525790/javascript-submit-is-not-a-function
