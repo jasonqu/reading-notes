@@ -816,113 +816,10 @@ It's quite common that our function callbacks lose their this binding, as we've 
 
 
 
-#### Binding Exceptions
- 略
 
-#### Safer this
-
-TODO
-
-Whatever you call it, the easiest way to set it up as totally empty is Object.create(null) (see Chapter 5). Object.create(null) is similar to { }, but without the delegation to Object.prototype, so it's "more empty" than just { }.
-
-```
-function foo(a,b) {
-    console.log( "a:" + a + ", b:" + b );
-}
-
-// our DMZ empty object
-var ø = Object.create( null );
-
-// spreading out array as parameters
-foo.apply( ø, [2, 3] ); // a:2, b:3
-
-// currying with `bind(..)`
-var bar = foo.bind( ø, 2 );
-bar( 3 ); // a:2, b:3
-```
-
-Not only functionally "safer", there's a sort of stylistic benefit to ø, in that it semantically conveys "I want the this to be empty" a little more clearly than null might. But again, name your DMZ object whatever you prefer.
-
-#### Softening Binding
-
-lue 
-
-### Lexical this
-
-Normal functions abide by the 4 rules we just covered. But ES6 introduces a special kind of function that does not use these rules: arrow-function.
-
-略
-
-### Review
-
-略
 
 
 ## Chapter 3: Objects
-
-···
-var myObj = {
-    key: value
-    // ...
-};
-
-或
-var myObj = new Object();
-myObj.key = value;
-···
-
-there are a few special object sub-types, which we can refer to as complex primitives.
-
-function is a sub-type of object (technically, a "callable object"). Functions in JS are said to be "first class" in that they are basically just normal objects (with callable behavior semantics bolted on), and so they can be handled like any other plain object.
-
-Arrays are also a form of objects, with extra behavior. The organization of contents in arrays is slightly more structured than for general objects.
-
-#### Built-in Objects
-
-String
-Number
-Boolean
-Object
-Function
-Array
-Date
-RegExp
-Error
-
-Only use the constructed form if you need the extra options.
-不要使用构造的方式
-
-···
-var myObject = {
-    a: 2
-};
-
-myObject.a;     // 2
-
-myObject["a"];  // 2
-```
-
-In objects, property names are always strings. 
-
-```
-var myObject = { };
-
-myObject[true] = "foo";
-myObject[3] = "bar";
-myObject[myObject] = "baz";
-
-myObject["true"];               // "foo"
-myObject["3"];                  // "bar"
-myObject["[object Object]"];    // "baz"
-```
-
-Symbol
-You will be strongly discouraged from working with the actual value of a Symbol (which can theoretically be different between different JS engines), so the name of the Symbol, like Symbol.Something (just a made up name!), will be what you use:
-
-
-#### Property vs. Method
-
-lue
 
 
 #### Duplicating Objects
@@ -931,36 +828,13 @@ lue
 var newObj = JSON.parse( JSON.stringify( someObj ) );
 ```
 
-TODO
+ES 6提供了assign方法
+var newObj = Object.assign( {}, myObject );
 
-### Property Descriptors
 
-But as of ES5, all properties are described in terms of a property descriptor.
+But it's possible to create an object that does not link to `Object.prototype` (via `Object.create(null)` -- see Chapter 5). In this case, a method call like `myObject.hasOwnProperty(..)` would fail.
 
-TODO
-
-### Immutability
-
-It is sometimes desired to make properties or objects that cannot be changed (either by accident or intentionally). ES5 adds support for handling that in a variety of different nuanced ways.
-
-方法：
-Object Constant
-Prevent Extensions
-Seal
-Freeze
-
-### [[Get]]
-
-There's a subtle, but important, detail about how property accesses are performed.
-
-### [[Put]]
-### Getters & Setters
-### Existence
-#### Enumeration
-
-TODO
-
-### Iteration
+In that scenario, a more robust way of performing such a check is `Object.prototype.hasOwnProperty.call(myObject,"a")`, which borrows the base `hasOwnProperty(..)` method and uses *explicit `this` binding* (see Chapter 2) to apply it against our `myObject`.
 
 
 ## Chapter 4: Mixing (Up) "Class" Objects
