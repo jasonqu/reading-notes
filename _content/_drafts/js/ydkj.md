@@ -837,9 +837,127 @@ But it's possible to create an object that does not link to `Object.prototype` (
 In that scenario, a more robust way of performing such a check is `Object.prototype.hasOwnProperty.call(myObject,"a")`, which borrows the base `hasOwnProperty(..)` method and uses *explicit `this` binding* (see Chapter 2) to apply it against our `myObject`.
 
 
+
+
+
+
+
+
 ## Chapter 4: Mixing (Up) "Class" Objects
 ## Chapter 5: Prototypes
 ## Chapter 6: Behavior Delegation
+https://github.com/getify/You-Dont-Know-JS/blob/master/this%20&%20object%20prototypes/ch6.md
+
+Mental Models Compared
+https://github.com/getify/You-Dont-Know-JS/blob/master/this%20&%20object%20prototypes/ch6.md#mental-models-compared
+
+Now, let's implement the exact same functionality using OLOO style code:
+
+```
+Foo = {
+    init: function(who) {
+        this.me = who;
+    },
+    identify: function() {
+        return "I am " + this.me;
+    }
+};
+
+Bar = Object.create( Foo );
+
+Bar.speak = function() {
+    alert( "Hello, " + this.identify() + "." );
+};
+
+var b1 = Object.create( Bar );
+b1.init( "b1" );
+var b2 = Object.create( Bar );
+b2.init( "b2" );
+
+b1.speak();
+b2.speak();
+```
+
+https://github.com/getify/You-Dont-Know-JS/blob/master/this%20&%20object%20prototypes/fig6.png
+
+两个oloo的例子，值得阅读
+
+
+https://github.com/getify/You-Dont-Know-JS/blob/master/this%20&%20object%20prototypes/ch6.md#unlexical
+var Foo = {
+    bar() { /*..*/ },
+    baz: function baz() { /*..*/ }
+};
+
+等价于
+
+var Foo = {
+    bar: function() { /*..*/ },
+    baz: function baz() { /*..*/ }
+};
+
+Lack of a name identifier on an anonymous function:
+
+makes debugging stack traces harder
+makes self-referencing (recursion, event (un)binding, etc) harder
+makes code (a little bit) harder to understand
+
+因此推荐后者，
+
+https://github.com/getify/You-Dont-Know-JS/blob/master/this%20&%20object%20prototypes/ch6.md#introspection
+
+duck typing
+
+Another common, but perhaps less robust, pattern for type introspection, which many devs seem to prefer over instanceof, is called "duck typing". This term comes from the adage, "if it looks like a duck, and it quacks like a duck, it must be a duck".
+
+Example:
+
+```
+if (a1.something) {
+    a1.something();
+}
+```
+
+For various reasons, there's a need to determine if any arbitrary object reference is a Promise, but the way that test is done is to check if the object happens to have a then() function present on it. In other words, if any object happens to have a then() method, ES6 Promises will assume unconditionally that the object is a "thenable" and therefore will expect it to behave conformantly to all standard behaviors of Promises.
+
+If you have any non-Promise object that happens for whatever reason to have a then() method on it, you are strongly advised to keep it far away from the ES6 Promise mechanism to avoid broken assumptions.
+
+
+
+
+Turning our attention once again back to OLOO-style code as presented here in this chapter, type introspection turns out to be much cleaner. Let's recall (and abbreviate) the Foo / Bar / b1 OLOO example from earlier in the chapter:
+
+```
+var Foo = { /* .. */ };
+
+var Bar = Object.create( Foo );
+Bar...
+
+var b1 = Object.create( Bar );
+```
+
+Using this OLOO approach, where all we have are plain objects that are related via [[Prototype]] delegation, here's the quite simplified type introspection we might use:
+
+```
+// relating `Foo` and `Bar` to each other
+Foo.isPrototypeOf( Bar ); // true
+Object.getPrototypeOf( Bar ) === Foo; // true
+
+// relating `b1` to both `Foo` and `Bar`
+Foo.isPrototypeOf( b1 ); // true
+Bar.isPrototypeOf( b1 ); // true
+Object.getPrototypeOf( b1 ) === Bar; // true
+```
+
+We're not using instanceof anymore, because it's confusingly pretending to have something to do with classes. Now, we just ask the (informally stated) question, "are you a prototype of me?" There's no more indirection necessary with stuff like Foo.prototype or the painfully verbose Foo.prototype.isPrototypeOf(..).
+
+I think it's fair to say these checks are significantly less complicated/confusing than the previous set of introspection checks. Yet again, we see that OLOO is simpler than (but with all the same power of) class-style coding in JavaScript.
+
+
+
+
+
+
 ## Appendix A: ES6 class
 略
 
@@ -847,180 +965,9 @@ In that scenario, a more robust way of performing such a check is `Object.protot
 
 # You Don't Know JS: Types & Grammar
 
-## Chapter 1: Types
-
-Now, if you're a fan of strongly typed (statically typed) languages, you may object to this usage of the word "type." In those languages, "type" means a whole lot more than it does here in JS.
-
-Some people say JS shouldn't claim to have "types," and they should instead be called "tags" or perhaps "subtypes".
-
-### Built-in Types
-
-typeof
-
-### Values as Types
-
-var a = 42;
-typeof a; // "number"
-
-a = true;
-typeof a; // "boolean"
-
-#### undefined vs "undeclared"
-
-var a;
-
-a; // undefined
-b; // ReferenceError: b is not defined
-
-#### typeof Undeclared
-
-```
-// oops, this would throw an error!
-if (DEBUG) {
-    console.log( "Debugging is starting" );
-}
-
-// this is a safe existence check
-if (typeof DEBUG !== "undefined") {
-    console.log( "Debugging is starting" );
-}
-```
-
-This sort of check is useful even if you're not dealing with user-defined variables (like DEBUG). If you are doing a feature check for a built-in API, you may also find it helpful to check without throwing an error:
-
-```
-if (typeof atob === "undefined") {
-    atob = function() { /*..*/ };
-}
-```
-
-Another way of doing these checks against global variables but without the safety guard feature of typeof is to observe that all global variables are also properties of the global object, which in the browser is basically the window object. So, the above checks could have been done (quite safely) as:
-
-```
-if (window.DEBUG) {
-    // ..
-}
-
-if (!window.atob) {
-    // ..
-}
-```
-
-
-Technically, this safety guard on typeof is useful even if you're not using global variable
-
-
-Imagine a utility function that you want others to copy-and-paste into their programs or modules, in which you want to check to see if the including program has defined a certain variable (so that you can use it) or not:
-
-```
-function doSomethingCool() {
-    var helper =
-        (typeof FeatureXYZ !== "undefined") ?
-        FeatureXYZ :
-        function() { /*.. default feature ..*/ };
-
-    var val = helper();
-    // ..
-}
-```
-
-```
-// an IIFE (see "Immediately Invoked Function Expressions"
-// discussion in the *Scope & Closures* title of this series)
-(function(){
-    function FeatureXYZ() { /*.. my XYZ feature ..*/ }
-
-    // include `doSomethingCool(..)`
-    function doSomethingCool() {
-        var helper =
-            (typeof FeatureXYZ !== "undefined") ?
-            FeatureXYZ :
-            function() { /*.. default feature ..*/ };
-
-        var val = helper();
-        // ..
-    }
-
-    doSomethingCool();
-})();
-```
-
-```
-function doSomethingCool(FeatureXYZ) {
-    var helper = FeatureXYZ ||
-        function() { /*.. default feature ..*/ };
-
-    var val = helper();
-    // ..
-}
-```
-
-## Chapter 2: Values
-
-### Arrays
-lue
-
-### Array-Likes
-
-There will be occasions where you need to convert an array-like value (a numerically indexed collection of values) into a true array, usually so you can call array utilities (like indexOf(..), concat(..), forEach(..), etc.) against the collection of values.
-
-For example, various DOM query operations return lists of DOM elements that are not true arrays but are array-like enough for our conversion purposes. Another common example is when functions expose the arguments (array-like) object (as of ES6, deprecated) to access the arguments as a list.
-
-
-One very common way to make such a conversion is to borrow the slice(..) utility against the value:
-
-```
-function foo() {
-    var arr = Array.prototype.slice.call( arguments );
-    arr.push( "bam" );
-    console.log( arr );
-}
-
-foo( "bar", "baz" ); // ["bar","baz","bam"]
-```
-
-### Strings
-练习
-
-### Numbers
-练习
-
-null undefined void 略
-
-NaN Infinity 略
-
-#### Special Equality
-
-ES6 ： Object.is(..)
-
-### Value vs. Reference
-
-TODO
-
-
-## Chapter 3: Natives
-
-String()
-Number()
-Boolean()
-Array()
-Object()
-Function()
-RegExp()
-Date()
-Error()
-Symbol() -- added in ES6!
-
-练习
-
-
 ## Chapter 4: Coercion
 
 TODO
-
-## Chapter 5: Grammar
-
-略 跟java类似
 
 
 ## Appendix A: Mixed Environment JavaScript
