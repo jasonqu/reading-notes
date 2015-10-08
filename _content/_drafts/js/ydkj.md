@@ -837,9 +837,127 @@ But it's possible to create an object that does not link to `Object.prototype` (
 In that scenario, a more robust way of performing such a check is `Object.prototype.hasOwnProperty.call(myObject,"a")`, which borrows the base `hasOwnProperty(..)` method and uses *explicit `this` binding* (see Chapter 2) to apply it against our `myObject`.
 
 
+
+
+
+
+
+
 ## Chapter 4: Mixing (Up) "Class" Objects
 ## Chapter 5: Prototypes
 ## Chapter 6: Behavior Delegation
+https://github.com/getify/You-Dont-Know-JS/blob/master/this%20&%20object%20prototypes/ch6.md
+
+Mental Models Compared
+https://github.com/getify/You-Dont-Know-JS/blob/master/this%20&%20object%20prototypes/ch6.md#mental-models-compared
+
+Now, let's implement the exact same functionality using OLOO style code:
+
+```
+Foo = {
+    init: function(who) {
+        this.me = who;
+    },
+    identify: function() {
+        return "I am " + this.me;
+    }
+};
+
+Bar = Object.create( Foo );
+
+Bar.speak = function() {
+    alert( "Hello, " + this.identify() + "." );
+};
+
+var b1 = Object.create( Bar );
+b1.init( "b1" );
+var b2 = Object.create( Bar );
+b2.init( "b2" );
+
+b1.speak();
+b2.speak();
+```
+
+https://github.com/getify/You-Dont-Know-JS/blob/master/this%20&%20object%20prototypes/fig6.png
+
+两个oloo的例子，值得阅读
+
+
+https://github.com/getify/You-Dont-Know-JS/blob/master/this%20&%20object%20prototypes/ch6.md#unlexical
+var Foo = {
+    bar() { /*..*/ },
+    baz: function baz() { /*..*/ }
+};
+
+等价于
+
+var Foo = {
+    bar: function() { /*..*/ },
+    baz: function baz() { /*..*/ }
+};
+
+Lack of a name identifier on an anonymous function:
+
+makes debugging stack traces harder
+makes self-referencing (recursion, event (un)binding, etc) harder
+makes code (a little bit) harder to understand
+
+因此推荐后者，
+
+https://github.com/getify/You-Dont-Know-JS/blob/master/this%20&%20object%20prototypes/ch6.md#introspection
+
+duck typing
+
+Another common, but perhaps less robust, pattern for type introspection, which many devs seem to prefer over instanceof, is called "duck typing". This term comes from the adage, "if it looks like a duck, and it quacks like a duck, it must be a duck".
+
+Example:
+
+```
+if (a1.something) {
+    a1.something();
+}
+```
+
+For various reasons, there's a need to determine if any arbitrary object reference is a Promise, but the way that test is done is to check if the object happens to have a then() function present on it. In other words, if any object happens to have a then() method, ES6 Promises will assume unconditionally that the object is a "thenable" and therefore will expect it to behave conformantly to all standard behaviors of Promises.
+
+If you have any non-Promise object that happens for whatever reason to have a then() method on it, you are strongly advised to keep it far away from the ES6 Promise mechanism to avoid broken assumptions.
+
+
+
+
+Turning our attention once again back to OLOO-style code as presented here in this chapter, type introspection turns out to be much cleaner. Let's recall (and abbreviate) the Foo / Bar / b1 OLOO example from earlier in the chapter:
+
+```
+var Foo = { /* .. */ };
+
+var Bar = Object.create( Foo );
+Bar...
+
+var b1 = Object.create( Bar );
+```
+
+Using this OLOO approach, where all we have are plain objects that are related via [[Prototype]] delegation, here's the quite simplified type introspection we might use:
+
+```
+// relating `Foo` and `Bar` to each other
+Foo.isPrototypeOf( Bar ); // true
+Object.getPrototypeOf( Bar ) === Foo; // true
+
+// relating `b1` to both `Foo` and `Bar`
+Foo.isPrototypeOf( b1 ); // true
+Bar.isPrototypeOf( b1 ); // true
+Object.getPrototypeOf( b1 ) === Bar; // true
+```
+
+We're not using instanceof anymore, because it's confusingly pretending to have something to do with classes. Now, we just ask the (informally stated) question, "are you a prototype of me?" There's no more indirection necessary with stuff like Foo.prototype or the painfully verbose Foo.prototype.isPrototypeOf(..).
+
+I think it's fair to say these checks are significantly less complicated/confusing than the previous set of introspection checks. Yet again, we see that OLOO is simpler than (but with all the same power of) class-style coding in JavaScript.
+
+
+
+
+
+
 ## Appendix A: ES6 class
 略
 
@@ -847,320 +965,519 @@ In that scenario, a more robust way of performing such a check is `Object.protot
 
 # You Don't Know JS: Types & Grammar
 
-## Chapter 1: Types
-
-Now, if you're a fan of strongly typed (statically typed) languages, you may object to this usage of the word "type." In those languages, "type" means a whole lot more than it does here in JS.
-
-Some people say JS shouldn't claim to have "types," and they should instead be called "tags" or perhaps "subtypes".
-
-### Built-in Types
-
-typeof
-
-### Values as Types
-
-var a = 42;
-typeof a; // "number"
-
-a = true;
-typeof a; // "boolean"
-
-#### undefined vs "undeclared"
-
-var a;
-
-a; // undefined
-b; // ReferenceError: b is not defined
-
-#### typeof Undeclared
-
-```
-// oops, this would throw an error!
-if (DEBUG) {
-    console.log( "Debugging is starting" );
-}
-
-// this is a safe existence check
-if (typeof DEBUG !== "undefined") {
-    console.log( "Debugging is starting" );
-}
-```
-
-This sort of check is useful even if you're not dealing with user-defined variables (like DEBUG). If you are doing a feature check for a built-in API, you may also find it helpful to check without throwing an error:
-
-```
-if (typeof atob === "undefined") {
-    atob = function() { /*..*/ };
-}
-```
-
-Another way of doing these checks against global variables but without the safety guard feature of typeof is to observe that all global variables are also properties of the global object, which in the browser is basically the window object. So, the above checks could have been done (quite safely) as:
-
-```
-if (window.DEBUG) {
-    // ..
-}
-
-if (!window.atob) {
-    // ..
-}
-```
-
-
-Technically, this safety guard on typeof is useful even if you're not using global variable
-
-
-Imagine a utility function that you want others to copy-and-paste into their programs or modules, in which you want to check to see if the including program has defined a certain variable (so that you can use it) or not:
-
-```
-function doSomethingCool() {
-    var helper =
-        (typeof FeatureXYZ !== "undefined") ?
-        FeatureXYZ :
-        function() { /*.. default feature ..*/ };
-
-    var val = helper();
-    // ..
-}
-```
-
-```
-// an IIFE (see "Immediately Invoked Function Expressions"
-// discussion in the *Scope & Closures* title of this series)
-(function(){
-    function FeatureXYZ() { /*.. my XYZ feature ..*/ }
-
-    // include `doSomethingCool(..)`
-    function doSomethingCool() {
-        var helper =
-            (typeof FeatureXYZ !== "undefined") ?
-            FeatureXYZ :
-            function() { /*.. default feature ..*/ };
-
-        var val = helper();
-        // ..
-    }
-
-    doSomethingCool();
-})();
-```
-
-```
-function doSomethingCool(FeatureXYZ) {
-    var helper = FeatureXYZ ||
-        function() { /*.. default feature ..*/ };
-
-    var val = helper();
-    // ..
-}
-```
-
-## Chapter 2: Values
-
-### Arrays
-lue
-
-### Array-Likes
-
-There will be occasions where you need to convert an array-like value (a numerically indexed collection of values) into a true array, usually so you can call array utilities (like indexOf(..), concat(..), forEach(..), etc.) against the collection of values.
-
-For example, various DOM query operations return lists of DOM elements that are not true arrays but are array-like enough for our conversion purposes. Another common example is when functions expose the arguments (array-like) object (as of ES6, deprecated) to access the arguments as a list.
-
-
-One very common way to make such a conversion is to borrow the slice(..) utility against the value:
-
-```
-function foo() {
-    var arr = Array.prototype.slice.call( arguments );
-    arr.push( "bam" );
-    console.log( arr );
-}
-
-foo( "bar", "baz" ); // ["bar","baz","bam"]
-```
-
-### Strings
-练习
-
-### Numbers
-练习
-
-null undefined void 略
-
-NaN Infinity 略
-
-#### Special Equality
-
-ES6 ： Object.is(..)
-
-### Value vs. Reference
-
-TODO
-
-
-## Chapter 3: Natives
-
-String()
-Number()
-Boolean()
-Array()
-Object()
-Function()
-RegExp()
-Date()
-Error()
-Symbol() -- added in ES6!
-
-练习
-
-
 ## Chapter 4: Coercion
 
 TODO
-
-## Chapter 5: Grammar
-
-略 跟java类似
 
 
 ## Appendix A: Mixed Environment JavaScript
 
 TODO or 略
 
+Very Important！
+https://github.com/getify/You-Dont-Know-JS/blob/master/types%20&%20grammar/apA.md
+
+
+https://github.com/getify/You-Dont-Know-JS/blob/master/types%20&%20grammar/apA.md#host-objects
+```
+var a = document.createElement( "div" );
+
+typeof a;                               // "object" -- as expected
+Object.prototype.toString.call( a );    // "[object HTMLDivElement]"
+
+a.tagName;                              // "DIV"
+```
+
+### Native Prototypes
+
+One of the most widely known and classic pieces of JavaScript best practice wisdom is: never extend native prototypes.
+
+```
+if (!Array.prototype.push) {
+    // Netscape 4 doesn't have Array.push
+    Array.prototype.push = function(item) {
+        this[this.length] = item;
+    };
+}
+```
+
+### Shims/Polyfills
+
+Tip: ES5-Shim (https://github.com/es-shims/es5-shim) is a comprehensive collection of shims/polyfills for bringing a project up to ES5 baseline, and similarly, ES6-Shim (https://github.com/es-shims/es6-shim) provides shims for new APIs added as of ES6. While APIs can be shimmed/polyfilled, new syntax generally cannot. To bridge the syntactic divide, you'll want to also use an ES6-to-ES5 transpiler like Traceur (https://github.com/google/traceur-compiler/wiki/GettingStarted).
+
+
+
+The one thing they share is the single global object (window in the browser), which means multiple files can append their code to that shared namespace and they can all interact.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # You Don't Know JS: Async & Performance
 
+## Chapter 1: Asynchrony: Now & Later
 
+同步获取数据并展示
+// ajax(..) is some arbitrary Ajax function given by a library
+var data = ajax( "http://some.url.1" );
 
+console.log( data );
+// Oops! `data` generally won't have the Ajax results
 
+异步获取数据并展示
+// ajax(..) is some arbitrary Ajax function given by a library
+ajax( "http://some.url.1", function myCallbackFunction(data){
 
+    console.log( data ); // Yay, I gots me some `data`!
 
+} );
 
 
+For example, consider this code:
 
+function now() {
+    return 21;
+}
 
+function later() {
+    answer = answer * 2;
+    console.log( "Meaning of life:", answer );
+}
 
+var answer = now();
 
+setTimeout( later, 1000 ); // Meaning of life: 42
+There are two chunks to this program: the stuff that will run now, and the stuff that will run later. It should be fairly obvious what those two chunks are, but let's be super explicit:
 
+Now:
 
+function now() {
+    return 21;
+}
 
+function later() { .. }
 
+var answer = now();
 
+setTimeout( later, 1000 );
+Later:
 
+answer = answer * 2;
+console.log( "Meaning of life:", answer );
+The now chunk runs right away, as soon as you execute your program. But setTimeout(..) also sets up an event (a timeout) to happen later, so the contents of the later() function will be executed at a later time (1,000 milliseconds from now).
 
+Any time you wrap a portion of code into a function and specify that it should be executed in response to some event (timer, mouse click, Ajax response, etc.), you are creating a later chunk of your code, and thus introducing asynchrony to your program.
 
+#### Async Console
 
+```
+var a = {
+    index: 1
+};
 
+// later
+console.log( a ); // ??
 
+// even later
+a.index++;
+```
 
+console.log是异步的，有时可能输出 {a:2}
 
+Note: If you run into this rare scenario, the best option is to use breakpoints in your JS debugger instead of relying on console output. The next best option would be to force a "snapshot" of the object in question by serializing it to a string, like with JSON.stringify(..).
 
 
+https://github.com/getify/You-Dont-Know-JS/blob/master/async%20&%20performance/ch1.md#event-loop
+### Event Loop
 
+The JS engine itself has never done anything more than execute a single chunk of your program at any given moment, when asked to.
 
+"Asked to." By whom? That's the important part!
 
+The JS engine doesn't run in isolation. It runs inside a hosting environment, which is for most developers the typical web browser. Over the last several years (but by no means exclusively), JS has expanded beyond the browser into other environments, such as servers, via things like Node.js. In fact, JavaScript gets embedded into all kinds of devices these days, from robots to lightbulbs.
 
+But the one common "thread" (that's a not-so-subtle asynchronous joke, for what it's worth) of all these environments is that they have a mechanism in them that handles executing multiple chunks of your program over time, at each moment invoking the JS engine, called the "event loop."
 
+In other words, the JS engine has had no innate sense of time, but has instead been an on-demand execution environment for any arbitrary snippet of JS. It's the surrounding environment that has always scheduled "events" (JS code executions).
 
+So, for example, when your JS program makes an Ajax request to fetch some data from a server, you set up the "response" code in a function (commonly called a "callback"), and the JS engine tells the hosting environment, "Hey, I'm going to suspend execution for now, but whenever you finish with that network request, and you have some data, please call this function back."
 
+The browser is then set up to listen for the response from the network, and when it has something to give you, it schedules the callback function to be executed by inserting it into the event loop.
 
+So what is the event loop?
 
+Let's conceptualize it first through some fake-ish code:
 
+```
+// `eventLoop` is an array that acts as a queue (first-in, first-out)
+var eventLoop = [ ];
+var event;
 
+// keep going "forever"
+while (true) {
+    // perform a "tick"
+    if (eventLoop.length > 0) {
+        // get the next event in the queue
+        event = eventLoop.shift();
 
+        // now, execute the next event
+        try {
+            event();
+        }
+        catch (err) {
+            reportError(err);
+        }
+    }
+}
+```
 
+As you can see, there's a continuously running loop represented by the while loop, and each iteration of this loop is called a "tick." For each tick, if an event is waiting on the queue, it's taken off and executed. These events are your function callbacks.
 
+It's important to note that setTimeout(..) doesn't put your callback on the event loop queue. What it does is set up a timer; when the timer expires, the environment places your callback into the event loop, such that some future tick will pick it up and execute it.
 
+What if there are already 20 items in the event loop at that moment? Your callback waits. It gets in line behind the others -- there's not normally a path for preempting the queue and skipping ahead in line. This explains why setTimeout(..) timers may not fire with perfect temporal accuracy. You're guaranteed (roughly speaking) that your callback won't fire before the time interval you specify, but it can happen at or after that time, depending on the state of the event queue.
 
 
+### Parallel Threading
 
+It's very common to conflate the terms "async" and "parallel," but they are actually quite different. Remember, async is about the gap between now and later. But parallel is about things being able to occur simultaneously.
 
+The most common tools for parallel computing are processes and threads. Processes and threads execute independently and may execute simultaneously: on separate processors, or even separate computers, but multiple threads can share the memory of a single process.
 
+```
+var a = 20;
 
+function foo() {
+    a = a + 1;
+}
 
+function bar() {
+    a = a * 2;
+}
 
+// ajax(..) is some arbitrary Ajax function given by a library
+ajax( "http://some.url.1", foo );
+ajax( "http://some.url.2", bar );
+```
 
+Because of JavaScript's single-threading, the code inside of foo() (and bar()) is atomic, which means that once foo() starts running, the entirety of its code will finish before any of the code in bar() can run, or vice versa. This is called "run-to-completion" behavior.
 
+Two outcomes from the same code means we still have nondeterminism! But it's at the function (event) ordering level, rather than at the statement ordering level (or, in fact, the expression operation ordering level) as it is with threads. In other words, it's more deterministic than threads would have been.
 
+As applied to JavaScript's behavior, this function-ordering nondeterminism is the common term "race condition," as foo() and bar() are racing against each other to see which runs first. Specifically, it's a "race condition" because you cannot predict reliably how a and b will turn out.
 
 
+**If they don't interact, nondeterminism is perfectly acceptable.**
 
+For example:
 
+```
+var res = {};
 
+function foo(results) {
+    res.foo = results;
+}
 
+function bar(results) {
+    res.bar = results;
+}
 
+// ajax(..) is some arbitrary Ajax function given by a library
+ajax( "http://some.url.1", foo );
+ajax( "http://some.url.2", bar );
+```
 
+#### Interaction
 
+```
+var res = [];
 
+function response(data) {
+    res.push( data );
+}
 
+// ajax(..) is some arbitrary Ajax function given by a library
+ajax( "http://some.url.1", response );
+ajax( "http://some.url.2", response );
+```
 
+So, to address such a race condition, you can coordinate ordering interaction:
 
+```
+var res = [];
 
+function response(data) {
+    if (data.url == "http://some.url.1") {
+        res[0] = data;
+    }
+    else if (data.url == "http://some.url.2") {
+        res[1] = data;
+    }
+}
 
+// ajax(..) is some arbitrary Ajax function given by a library
+ajax( "http://some.url.1", response );
+ajax( "http://some.url.2", response );
+```
 
+The same reasoning from this scenario would apply if multiple concurrent function calls were interacting with each other through the shared DOM, like one updating the contents of a <div> and the other updating the style or attributes of the <div> (e.g., to make the DOM element visible once it has content). You probably wouldn't want to show the DOM element before it had content, so the coordination must ensure proper ordering interaction.
 
+### Cooperation
 
+把大的耗时的操作分开
+TODO
 
+### Jobs
 
+As of ES6, there's a new concept layered on top of the event loop queue, called the "Job queue." The most likely exposure you'll have to it is with the asynchronous behavior of Promises (see Chapter 3).
 
+与eloop的区别可以认为是能够指定一个任务完成后所执行的下一个任务
 
+A Job can also cause more Jobs to be added to the end of the same queue. So, it's theoretically possible that a Job "loop" (a Job that keeps adding another Job, etc.) could spin indefinitely, thus starving the program of the ability to move on to the next event loop tick. This would conceptually be almost the same as just expressing a long-running or infinite loop (like while (true) ..) in your code.
 
+Jobs are kind of like the spirit of the setTimeout(..0) hack, but implemented in such a way as to have a much more well-defined and guaranteed ordering:** later, but as soon as possible.**
 
+Let's imagine an API for scheduling Jobs (directly, without hacks), and call it schedule(..). Consider:
 
+```
+console.log( "A" );
 
+setTimeout( function(){
+    console.log( "B" );
+}, 0 );
 
+// theoretical "Job API"
+schedule( function(){
+    console.log( "C" );
 
+    schedule( function(){
+        console.log( "D" );
+    } );
+} );
+```
 
+You might expect this to print out A B C D, but instead it would print out A C D B, because the Jobs happen at the end of the current event loop tick, and the timer fires to schedule for the next event loop tick (if available!).
 
+In Chapter 3, we'll see that the asynchronous behavior of Promises is based on Jobs, so it's important to keep clear how that relates to event loop behavior.
 
 
+## Chapter 2: Callbacks
 
+In Chapter 1, we explored the terminology and concepts around asynchronous programming in JavaScript. Our focus is on understanding the single-threaded (one-at-a-time) event loop queue that drives all "events" (async function invocations). We also explored various ways that concurrency patterns explain the relationships (if any!) between simultaneously running chains of events, or "processes" (tasks, function calls, etc.).
 
+All our examples in Chapter 1 used the function as the individual, indivisible unit of operations, whereby inside the function, statements run in predictable order (above the compiler level!), but at the function-ordering level, events (aka async function invocations) can happen in a variety of orders.
 
+As you no doubt have observed, callbacks are by far the most common way that asynchrony in JS programs is expressed and managed. Indeed, the callback is the most fundamental async pattern in the language.
 
+callback的问题就像goto语句，跳来跳去
 
+```
+Nested/Chained Callbacks
 
+Consider:
 
+listen( "click", function handler(evt){
+    setTimeout( function request(){
+        ajax( "http://some.url.1", function response(text){
+            if (text == "hello") {
+                handler();
+            }
+            else if (text == "world") {
+                request();
+            }
+        } );
+    }, 500) ;
+} );
+```
 
+But let me rewrite the previous nested event/timeout/Ajax example without using nesting:
 
+```
+listen( "click", handler );
 
+function handler() {
+    setTimeout( request, 500 );
+}
 
+function request(){
+    ajax( "http://some.url.1", response );
+}
 
+function response(text){
+    if (text == "hello") {
+        handler();
+    }
+    else if (text == "world") {
+        request();
+    }
+}
+```
 
+Here's roughly the list you come up with of ways the analytics utility could misbehave:
 
+* Call the callback too early (before it's been tracked)
+* Call the callback too late (or never)
+* Call the callback too few or too many times (like the problem you encountered!)
+* Fail to pass along any necessary environment/parameters to your callback
+* Swallow any errors/exceptions that may happen
 
+### Trying to Save Callbacks
 
+some API designs provide for split callbacks
 
+```
+function success(data) {
+    console.log( data );
+}
 
+function failure(err) {
+    console.error( err );
+}
 
+ajax( "http://some.url.1", success, failure );
+```
 
+Another common callback pattern is called "error-first style" (sometimes called "Node style," as it's also the convention used across nearly all Node.js APIs)
 
+```
+function response(err,data) {
+    // error?
+    if (err) {
+        console.error( err );
+    }
+    // otherwise, assume success
+    else {
+        console.log( data );
+    }
+}
 
+ajax( "http://some.url.1", response );
+```
 
+First, it has not really resolved the majority of trust issues like it may appear. There's nothing about either callback that prevents or filters unwanted repeated invocations. Moreover, things are worse now, because you may get both success and error signals, or neither, and you still have to code around either of those conditions.
 
+Also, don't miss the fact that while it's a standard pattern you can employ, it's definitely more verbose and boilerplate-ish without much reuse, so you're going to get weary of typing all that out for every single callback in your application.
 
+What about the trust issue of never being called? 
 
+TODO 练习 timeoutify
 
+Note: For more information on Zalgo, see Oren Golan's "Don't Release Zalgo!" (https://github.com/oren/oren.github.io/blob/master/posts/zalgo.md) and Isaac Z. Schlueter's "Designing APIs for Asynchrony" (http://blog.izs.me/post/59142742143/designing-apis-for-asynchrony).
 
+TODO 练习 asyncify
 
 
+## Chapter 3: Promises
 
+ES6特性 未在ie中实现
+https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Promise
+http://www.html5rocks.com/zh/tutorials/es6/promises/
+http://liubin.github.io/promises-book/#chapter1-what-is-promise
+http://www.alloyteam.com/2014/05/javascript-promise-mode/
+http://stylechen.com/easyjs-promise.html
+http://javascriptplayground.com/blog/2015/02/promises/
 
+Note: The word "immediately" will be used frequently in this chapter, generally to refer to some Promise resolution action. However, in essentially all cases, "immediately" means in terms of the Job queue behavior (see Chapter 1), not in the strictly synchronous now sense.
 
+```
+function add(getX,getY,cb) {
+    var x, y;
+    getX( function(xVal){
+        x = xVal;
+        // both are ready?
+        if (y != undefined) {
+            cb( x + y );    // send along sum
+        }
+    } );
+    getY( function(yVal){
+        y = yVal;
+        // both are ready?
+        if (x != undefined) {
+            cb( x + y );    // send along sum
+        }
+    } );
+}
 
+// `fetchX()` and `fetchY()` are sync or async
+// functions
+add( fetchX, fetchY, function(sum){
+    console.log( sum ); // that was easy, huh?
+} );
+```
 
 
+via Promises:
 
+```
+function add(xPromise,yPromise) {
+    // `Promise.all([ .. ])` takes an array of promises,
+    // and returns a new promise that waits on them
+    // all to finish
+    return Promise.all( [xPromise, yPromise] )
 
+    // when that promise is resolved, let's take the
+    // received `X` and `Y` values and add them together.
+    .then( function(values){
+        // `values` is an array of the messages from the
+        // previously resolved promises
+        return values[0] + values[1];
+    } );
+}
 
+// `fetchX()` and `fetchY()` return promises for
+// their respective values, which may be ready
+// *now* or *later*.
+add( fetchX(), fetchY() )
 
+// we get a promise back for the sum of those
+// two numbers.
+// now we chain-call `then(..)` to wait for the
+// resolution of that returned promise.
+.then( function(sum){
+    console.log( sum ); // that was easier!
+} );
+````
 
+There are two layers of Promises in this snippet.
 
+fetchX() and fetchY() are called directly, and the values they return (promises!) are passed into add(..). The underlying values those promises represent may be ready now or later, but each promise normalizes the behavior to be the same regardless. We reason about X and Y values in a time-independent way. They are future values.
 
+The second layer is the promise that add(..) creates (via Promise.all([ .. ])) and returns, which we wait on by calling then(..). When the add(..) operation completes, our sum future value is ready and we can print it out. We hide inside of add(..) the logic for waiting on the X and Y future values.
 
+Note: Inside add(..), the Promise.all([ .. ]) call creates a promise (which is waiting on promiseX and promiseY to resolve). The chained call to .then(..) creates another promise, which the return values[0] + values[1] line immediately resolves (with the result of the addition). Thus, the then(..) call we chain off the end of the add(..) call -- at the end of the snippet -- is actually operating on that second promise returned, rather than the first one created by Promise.all([ .. ]). Also, though we are not chaining off the end of that second then(..), it too has created another promise, had we chosen to observe/use it. This Promise chaining stuff will be explained in much greater detail later in this chapter.
 
+With Promises, the then(..) call can actually take two functions, the first for fulfillment (as shown earlier), and the second for rejection:
 
+```
+add( fetchX(), fetchY() )
+.then(
+    // fullfillment handler
+    function(sum) {
+        console.log( sum );
+    },
+    // rejection handler
+    function(err) {
+        console.error( err ); // bummer!
+    }
+);
+```
 
+If something went wrong getting X or Y, or something somehow failed during the addition, the promise that add(..) returns is rejected, and the second callback error handler passed to then(..) will receive the rejection value from the promise.
+
+Because Promises encapsulate the time-dependent state -- waiting on the fulfillment or rejection of the underlying value -- from the outside, the Promise itself is time-independent, and thus Promises can be composed (combined) in predictable ways regardless of the timing or outcome underneath.
+
+Moreover, once a Promise is resolved, it stays that way forever -- it becomes an immutable value at that point -- and can then be observed as many times as necessary.
 
 
 
