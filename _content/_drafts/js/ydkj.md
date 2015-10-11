@@ -1481,6 +1481,29 @@ Moreover, once a Promise is resolved, it stays that way forever -- it becomes an
 
 
 
+Here's another common example of silly microperformance obsession:
+```
+var x = [ .. ];
+
+// Option 1
+for (var i=0; i < x.length; i++) {
+    // ..
+}
+
+// Option 2
+for (var i=0, len = x.length; i < len; i++) {
+    // ..
+}
+```
+The theory here goes that you should cache the length of the x array in the variable len, because ostensibly it doesn't change, to avoid paying the price of x.length being consulted for each iteration of the loop.
+
+If you run performance benchmarks around x.length usage compared to caching it in a len variable, you'll find that while the theory sounds nice, in practice any measured differences are statistically completely irrelevant.
+
+In fact, in some engines like v8, it can be shown (http://mrale.ph/blog/2014/12/24/array-length-caching.html) that you could make things slightly worse by pre-caching the length instead of letting the engine figure it out for you. Don't try to outsmart your JavaScript engine, you'll probably lose when it comes to performance optimizations.
+
+
+
+"There is nothing more permanent than a temporary hack." Chances are, the code you write now to work around some performance bug will probably outlive the performance bug in the browser itself.
 
 
 
@@ -1493,11 +1516,17 @@ Moreover, once a Promise is resolved, it stays that way forever -- it becomes an
 
 
 
+Ever heard the admonition, "that's premature optimization!"? It comes from a famous quote from Donald Knuth: "premature optimization is the root of all evil.". Many developers cite this quote to suggest that most optimizations are "premature" and are thus a waste of effort. The truth is, as usual, more nuanced.
+
+Here is Knuth's quote, in context:
+
+Programmers waste enormous amounts of time thinking about, or worrying about, the speed of noncritical parts of their programs, and these attempts at efficiency actually have a strong negative impact when debugging and maintenance are considered. We should forget about small efficiencies, say about 97% of the time: premature optimization is the root of all evil. Yet we should not pass up our opportunities in that critical 3%. [emphasis added]
+(http://web.archive.org/web/20130731202547/http://pplab.snu.ac.kr/courses/adv_pl05/papers/p261-knuth.pdf, Computing Surveys, Vol 6, No 4, December 1974)
+
+I believe it's a fair paraphrasing to say that Knuth meant: "non-critical path optimization is the root of all evil." So the key is to figure out if your code is on the critical path -- you should optimize it! -- or not.
 
 
-
-
-
+I'd even go so far as to say this: no amount of time spent optimizing critical paths is wasted, no matter how little is saved; but no amount of optimization on noncritical paths is justified, no matter how much is saved.
 
 
 

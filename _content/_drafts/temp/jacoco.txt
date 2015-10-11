@@ -1,0 +1,5 @@
+jacoco
+
+excludes
+http://stackoverflow.com/questions/29887805/filter-jacoco-coverage-reports-with-gradle
+

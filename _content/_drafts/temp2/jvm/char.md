@@ -186,3 +186,33 @@ object CharSeq extends App {
 ```
 
 其中有些细节参考了Freewind的实现 https://github.com/freewind/native2ascii
+
+
+https://github.com/ariwaranosai/convert
+
+```
+object asciichar {
+  def unapply(ascii: String): Option[(Char, String)] =
+    if (ascii.startsWith("\\u"))
+      Some(Integer.parseInt(ascii.substring(2, 6), 16).toChar, ascii.substring(6))
+    else if(ascii.length > 0)
+      Some((ascii(0), ascii.substring(1)))
+    else None
+}
+
+object convert {
+  def native2ascii(naive: CharSequence): CharSequence =
+    naive.toString.flatMap(x => {
+      if (x > 127) f"\\u$x%04x"
+      else x.toString
+    })
+
+  def ascii2native(ascii: CharSequence): CharSequence = ascii.toString match {
+    case asciichar(first, last) => first.toString + ascii2native(last)
+    case _ => ""
+  }
+}
+```
+
+
+
