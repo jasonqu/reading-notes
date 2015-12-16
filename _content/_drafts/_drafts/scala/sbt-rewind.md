@@ -991,26 +991,83 @@ def imageResources(base: File): PathFinder =
 
 
 
+### Parallel Execution
+
+#### Task ordering 
+
+no order 
+
+```
+write := IO.write(file("/tmp/sample.txt"), "Some content.")
+
+read := IO.read(file("/tmp/sample.txt"))
+```
+
+to order
+
+```
+write := {
+  val f = file("/tmp/sample.txt")
+  IO.write(f, "Some content.")
+  f
+}
+
+read := IO.read(write.value)
+```
+
+其它 略
+
+
+
+### External Processes 
+TODO good
+
+
+### Running Project Code 
+not so important
+
+
+### Testing 
+
+The resources may be accessed from tests by using the getResource methods of java.lang.Class or java.lang.ClassLoader.
+
+#### Setup and Cleanup 
+etc
+
+parallelExecution in Test := false
+
+testOptions in Test := Seq(Tests.Filter(s => s.endsWith("Test")))
+
+fork in Test := true
+
+```
+import Tests._
+
+{
+  def groupByFirst(tests: Seq[TestDefinition]) =
+    tests groupBy (_.name(0)) map {
+      case (letter, tests) => new Group(letter.toString, tests, SubProcess(Seq("-Dfirst.letter"+letter)))
+    } toSeq
+
+    testGrouping in Test <<= groupByFirst( (definedTests in Test).value )
+}
+```
+
+#### Integration Tests 
+#### Custom test configuration 
+#### Additional test configurations with shared sources 
+#### Custom Test Framework 
+#### Custom Test Reporters 
+#### Using Extensions 
+TODO
 
 
 
 
 
+## Dependency Management
+### Artifacts
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+科技，金融，赌博是经济的什么模式
