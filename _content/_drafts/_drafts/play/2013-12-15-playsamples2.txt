@@ -1,0 +1,375 @@
+---
+layout: post
+title: play study
+tagline: code better
+tags : ["play","web framework"]
+---
+
+up to play-2.2.1
+
+
+#### Hello world
+
+一个基础简单实例，展示了怎样编写controller 和 action，routes、template以及form。
+
+首页是一个表单，提交之后将会转到一个展示页面：
+TODO 两个图片
+
+###### routes
+
+两个url ：index 和 hello
+
+<pre>
+GET     /                           controllers.Application.index
+GET     /hello                      controllers.Application.sayHello
+GET     /assets/*file               controllers.Assets.at(path="/public", file)
+</pre>
+
+###### base view
+
+main.scala.html 接受两个参数 @(title: String)(content: Html)，分别是标题和页面的内容
+
+###### index
+
+首先在Application.scala中定义了一个表单，其中对表单参数name、repeat还进行了限制，而color则是可选的；然后在index这个action中将这个表单传给了index的template：
+
+<pre>
+  val helloForm = Form(
+    tuple(
+      "name" -> nonEmptyText,
+      "repeat" -> number(min = 1, max = 100),
+      "color" -> optional(text)
+    )
+  )
+
+  def index = Action {
+    Ok(html.index(helloForm))
+  }
+</pre>
+
+index.scala.html 接受一个表单为参数：@(helloForm: Form[(String,Int,Option[String])])
+
+使用了main template，title为固定值"The 'helloworld' application"，构造form的时候使用了helper方法【需要引用 @import helper._】
+
+<pre>
+    &lt;h1>Configure your 'Hello world':&lt;/h1>
+
+    @form(action = routes.Application.sayHello, args = 'id -> "helloform") {
+        @inputText(
+            field = helloForm("name"),
+            args = '_label -> "What's your name?", 'placeholder -> "World"
+        )
+        @inputText(
+            field = helloForm("repeat"),
+            args = '_label -> "How many times?", 'size -> 3, 'placeholder -> 10
+        )
+        @select(
+            field = helloForm("color"), 
+            options = options(
+                "" -> "Default",
+                "red" -> "Red",
+                "green" -> "Green",
+                "blue" -> "Blue"
+            ),
+            args = '_label -> "Choose a color"
+        )
+
+        &lt;p class="buttons">
+            &lt;input type="submit" id="submit">
+        &lt;p>
+
+    }
+</pre>
+
+以name为例，生成的结果是：
+<pre>
+@inputText(
+    field = helloForm("name"),
+    args = '_label -> "What's your name?", 'placeholder -> "World"
+)
+
+-->
+
+&lt;dl class=" " id="name_field">
+    &lt;dt>&lt;label for="name">What's your name?&lt;/label>&lt;/dt>
+    &lt;dd>
+    &lt;input type="text" id="name" name="name" value="" placeholder="World">
+&lt;/dd>
+        &lt;dd class="info">Required</dd>
+&lt;/dl>
+</pre>
+
+填好参数后，点击提交，会将表单信息传给Application.sayHello
+
+<pre>
+  def sayHello = Action { implicit request =>
+    helloForm.bindFromRequest.fold(
+      formWithErrors => BadRequest(html.index(formWithErrors)),
+      {case (name, repeat, color) => Ok(html.hello(name, repeat.toInt, color))}
+    )
+  }
+</pre>
+
+如果出现错误，将会把错误返回给index.html，错误是在这里定义的：
+
+<pre>
+  val helloForm = Form(
+    tuple(
+      "name" -> nonEmptyText,
+      "repeat" -> number(min = 1, max = 100),
+      "color" -> optional(text)
+    )
+  )
+</pre>
+
+如果通过了验证，则使用hello模板来处理：Ok(html.hello(name, repeat.toInt, color))
+
+这个模板接受三个参数 @(name: String, repeat: Int, color: Option[String])。按照repeat的值重复打印一段文字，生成一个页面，并有一个指向“@routes.Application.index” 的链接。
+
+
+#### forms
+
+这个示例介绍了怎样编写一个带有验证的表单，并且提供了动态处理重复值的功能。
+
+###### routes
+
+<pre>
+# Home page
+GET     /                           controllers.Application.index
+
+# Signup
+GET     /signup                     controllers.SignUp.form
+GET     /users/fakeuser             controllers.SignUp.editForm
+POST    /signup                     controllers.SignUp.submit
+
+# Contact
+GET     /contacts                   controllers.Contacts.form
+GET     /contacts/fakecontact       controllers.Contacts.editForm
+POST    /contacts                   controllers.Contacts.submit
+</pre>
+
+###### base view
+
+
+
+
+
+
+
+
+###### index view
+
+
+
+
+
+
+
+
+#### comet-clock
+
+一个很简单的使用iframe实现的comet示例。
+
+###### routes
+
+<pre>
+# Home page
+GET     /                           controllers.Application.index
+# The clock Comet stream
+GET     /clock                      controllers.Application.liveClock
+</pre>
+
+###### Application
+
+<pre>
+object Application extends Controller {
+  
+  /** 
+   * A String Enumerator producing a formatted Time message every 100 millis.
+   * A callback enumerator is pure an can be applied on several Iteratee.
+   */
+  lazy val clock: Enumerator[String] = {
+    
+    import java.util._
+    import java.text._
+    
+    val dateFormat = new SimpleDateFormat("HH mm ss")
+    
+    Enumerator.generateM {
+      Promise.timeout(Some(dateFormat.format(new Date)), 100 milliseconds)
+    }
+  }
+  
+  def index = Action {
+    Ok(views.html.index())
+  }
+  
+  def liveClock = Action {
+    Ok.chunked(clock &amp;> Comet(callback = "parent.clockChanged"))
+  }
+  
+}
+</pre>
+
+这里的liveClock 就是每隔100ms将这段html传给客户端：
+<pre>
+&lt;script type="text/javascript">parent.clockChanged('11 48 24');&lt;/script>
+</pre>
+
+
+###### index.scala.html
+
+<pre>
+@main {
+    &lt;h1 id="clock" />
+    
+    &lt;p>
+        Clock events are pushed from the Server using a Comet connection.
+    &lt;/p>
+    
+    &lt;script type="text/javascript" charset="utf-8">
+        // Called for each Comet message
+        var clockChanged = function(time) {
+            $('#clock').html(time.replace(/(\d)/g, '&lt;span>$1&lt;/span>'))
+        }
+    &lt;/script>
+    
+    &lt;iframe id="comet" src="@routes.Application.liveClock.unique">&lt;/iframe>
+}
+</pre>
+
+在index中，有一个id为clock的元素，并有一个javascript函数，将元素id的内容进行置换。最终还有一个id为comet的iframe来定时将内容推送到客户端。然后clockChanged函数就会被执行替换了。
+
+当然页面中漂亮的clock是css的效果，这里不再赘述。
+
+
+#### comet-live-monitoring
+
+comet高级特性展示，略。
+
+
+#### computer-database
+
+一个典型的数据库 CRUD 应用，展示了怎样使用Anorm操作数据库和结合Twitter Bootstrap，这里还展示了怎样构造form。
+
+###### application.conf
+
+默认使用了内存数据库
+
+###### routes
+
+<pre>
+# Default path will just redirect to the computer list
+GET     /                           controllers.Application.index
+
+# Computers list (look at the default values for pagination parameters)
+GET     /computers                  controllers.Application.list(p:Int ?= 0, s:Int ?= 2, f ?= "")
+
+# Add computer
+GET     /computers/new              controllers.Application.create
+POST    /computers                  controllers.Application.save
+
+# Edit existing computer
+GET     /computers/:id              controllers.Application.edit(id:Long)
+POST    /computers/:id              controllers.Application.update(id:Long)
+
+# Delete a computer
+POST    /computers/:id/delete       controllers.Application.delete(id:Long)
+</pre>
+
+###### controller
+
+我们从routes反过来看一下controller实现的业务逻辑
+
+* 展示列表
+GET     /                           controllers.Application.index
+GET     /computers                  controllers.Application.list(p:Int ?= 0, s:Int ?= 2, f ?= "")
+
+<pre>
+  def index = Action { Redirect(routes.Application.list(0, 2, "")) }
+
+  /**
+   * 分页展示电脑列表.
+   *
+   * @param page 当前页面下标
+   * @param orderBy 排序列
+   * @param filter 过滤字符串
+   */
+  def list(page: Int, orderBy: Int, filter: String) = Action { implicit request =>
+    Ok(html.list(
+      Computer.list(page = page, orderBy = orderBy, filter = ("%"+filter+"%")),
+      orderBy, filter
+    ))
+  }
+</pre>
+
+
+
+
+
+
+
+
+
+
+* 展示和修改电脑的实例
+
+因为用到了电脑的细节信息，而且需要表单，所以这里首先构建了一个电脑的表单：
+
+<pre>
+  val computerForm = Form(
+    mapping(
+      "id" -> ignored(NotAssigned:Pk[Long]),
+      "name" -> nonEmptyText,
+      "introduced" -> optional(date("yyyy-MM-dd")),
+      "discontinued" -> optional(date("yyyy-MM-dd")),
+      "company" -> optional(longNumber)
+    )(Computer.apply)(Computer.unapply)
+  )
+</pre>
+
+然后是创建和修改电脑
+# Add computer
+GET     /computers/new              controllers.Application.create
+POST    /computers                  controllers.Application.save
+
+<pre>
+  def create = Action {
+    Ok(html.createForm(computerForm, Company.options))
+  }
+
+  def update(id: Long) = Action { implicit request =>
+    computerForm.bindFromRequest.fold(
+      formWithErrors => BadRequest(html.editForm(id, formWithErrors, Company.options)),
+      computer => {
+        Computer.update(id, computer)
+        Home.flashing("success" -> "Computer %s has been updated".format(computer.name))
+      }
+    )
+  }
+</pre>
+
+# Edit existing computer
+GET     /computers/:id              controllers.Application.edit(id:Long)
+POST    /computers/:id              controllers.Application.update(id:Long)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,1947 @@
+---
+layout: post
+title: play study
+tagline: code better
+tags : ["play","web framework"]
+---
+
+get start
+
+ScalaTodoList
+
+play new todolist
+
+PlayConsole
+http://www.playframework.com/documentation/2.2.x/PlayConsole
+ScalaActions
+http://www.playframework.com/documentation/2.2.x/ScalaActions
+
+http://www.playframework.com/documentation/2.2.x/ScalaRouting
+
+http://www.playframework.com/documentation/2.2.x/ScalaTemplates
+http://www.playframework.com/documentation/2.2.x/ScalaForms
+
+http://www.playframework.com/documentation/2.2.x/ScalaForms
+
+http://www.playframework.com/documentation/2.2.x/ScalaDatabase
+
+http://www.playframework.com/documentation/2.2.x/ScalaAnorm
+
+
+
+<pre>
+val id: Option[Long] = SQL("insert into City(name, country) values ({name}, {country})")
+              .on('name -> "Cambridge", 'country -> "New Zealand").executeInsert()
+
+;
+</pre>
+
+http://www.playframework.com/documentation/2.2.x/SBTDependencies
+
+
+
+http://127.0.0.1:9000/@documentation/ScalaJsonCombinators
+New Filter API and CSRF protection
+
+
+
+Getting started
+Installing Play
+Creating a new application
+
+http://www.scala-sbt.org/
+
+Anatomy of a Play application
+
+Using the Play console
+Type console to enter the interactive Scala console, which allows you to test your code interactively
+
+Debugging
+You can ask Play to start a JPDA debug port when starting the console. You can then connect using Java debugger. Use the play debug command to do that:
+
+<code>$ play debug</code>
+When a JPDA port is available, the JVM will log this line during boot:
+
+Listening for transport dt_socket at address: 9999
+
+Using sbt features
+The Play console is just a normal sbt console, so you can use sbt features such as triggered execution.
+
+For example, using ~ compile
+
+[My first application] $ ~ compile
+The compilation will be triggered each time you change a source file.
+
+Force clean  $ play clean-all
+
+
+Setting up your preferred IDE
+
+You can also start your application with play debug run and then you can use the Connect JPDA launcher using Debug As to start a debugging session at any time. Stopping the debugging session will not stop the server.
+
+Sample applications
+Security policy
+
+
+Working with Play
+Play for Scala developers
+Play for Java developers
+
+
+### Main concepts
+
+#### HTTP programming
+
+##### Actions, Controllers and Results
+
+###### Building an Action
+
+<pre>
+Action { request =>
+  Ok("Got request [" + request + "]")
+}
+
+It is often useful to mark the request parameter as implicit so it can be implicitly used by other APIs that need it:
+
+Action { implicit request =>
+  Ok("Got request [" + request + "]")
+}
+
+Action(parse.json) { implicit request =>
+  Ok("Got request [" + request + "]")
+}
+</pre>
+
+A Controller is nothing more than a singleton object that generates Action values.
+
+<pre>
+def hello(name: String) = Action {
+  Ok("Hello " + name)
+}
+</pre>
+
+###### Simple results
+<pre>
+def index = Action {
+  SimpleResult(
+    header = ResponseHeader(200, Map(CONTENT_TYPE -> "text/plain")),
+    body = Enumerator("Hello world!".getBytes())
+  )
+}
+Or
+def index = Action {
+  Ok("Hello world!")
+}
+
+val ok = Ok("Hello world!")
+val notFound = NotFound
+val pageNotFound = NotFound(<h1>Page not found</h1>)
+val badRequest = BadRequest(views.html.form(formWithErrors))
+val oops = InternalServerError("Oops")
+val anyStatus = Status(488)("Strange response type")
+
+Redirects are simple results too
+def index = Action {
+  Redirect("/user/home") // 303 SEE_OTHER
+}
+def index = Action {
+  Redirect("/user/home", MOVED_PERMANENTLY)
+}
+</pre>
+
+
+##### HTTP routing
+
+###### The routes file syntax
+
+<pre>
+GET   /clients/:id          controllers.Clients.show(id: Long)
+</pre>
+
+The default matching strategy for a dynamic part is defined by the regular expression [^/]+, meaning that any dynamic part defined as :id will match exactly one URI part.
+
+###### Dynamic parts spanning several /
+
+<pre>
+GET   /files/*name          controllers.Application.download(name)
+</pre>
+
+Here for a request like GET /files/images/logo.png, the name dynamic part will capture the images/logo.png value.
+
+You can also define your own regular expression for the dynamic part, using the $id&lt;regex> syntax:
+
+<pre>
+GET   /items/$id&lt;[0-9]+>    controllers.Items.show(id: Long)
+</pre>
+
+###### Call to the Action generator method
+
+If the action method defines some parameters, all these parameter values will be searched for in the request URI, either extracted from the URI path itself, or from the query string.
+
+<pre>
+# Extract the page parameter from the path.
+GET   /:page                controllers.Application.show(page)
+Or:
+
+# Extract the page parameter from the query string.
+GET   /                     controllers.Application.show(page)
+
+def show(page: String) = Action {
+  loadContentFromDatabase(page).map { htmlContent =>
+    Ok(htmlContent).as("text/html")
+  }.getOrElse(NotFound)
+}
+</pre>
+
+If you want Play to transform the incoming parameter into a specific Scala type, you can explicitly type the parameter:
+
+<pre>
+GET   /clients/:id          controllers.Clients.show(id: Long)
+And do the same on the corresponding show method definition in the controllers.Clients controller:
+
+def show(id: Long) = Action {
+  Client.findById(id).map { client =>
+    Ok(views.html.Clients.display(client))
+  }.getOrElse(NotFound)
+}
+</pre>
+
+<pre>
+fix the value
+# Extract the page parameter from the path, or fix the value for /
+GET   /                     controllers.Application.show(page = "home")
+
+default value
+# Pagination links, like /clients?page=3
+GET   /clients              controllers.Clients.list(page: Int ?= 1)
+
+Optional value
+# The version parameter is optional. E.g. /api/list-all?version=3.0
+GET   /api/list-all         controllers.Api.list(version: Option[String])
+</pre>
+
+###### Reverse routing
+
+The router can also be used to generate a URL from within a Scala call. This makes it possible to centralize all your URI patterns in a single configuration file, so you can be more confident when refactoring your application.
+目的是将所有的URI pattern集中在一个配置文件中
+play会对所有在routes文件中的代码生成一个controller在routes包下
+For each controller used in the routes file, the router will generate a ‘reverse controller’ in the routes package, having the same action methods, with the same signature, but returning a play.api.mvc.Call instead of a play.api.mvc.Action.
+
+The play.api.mvc.Call defines an HTTP call, and provides both the HTTP method and the URI.
+
+例如如果定义了一个
+
+<pre>
+# Hello action
+GET   /hello/:name          controllers.Application.hello(name)
+</pre>
+
+可以这样使用
+
+You can then reverse the URL to the hello action method, by using the controllers.routes.Application reverse controller:
+
+<pre>
+// Redirect to /hello/Bob
+def helloBob = Action {
+  Redirect(routes.Application.hello("Bob"))
+}
+</pre>
+实际是使用 controllers.routes.Application，因为同包而省去了最前面的controllers
+
+##### Manipulating results
+
+###### Changing the default Content-Type
+
+The result content type is automatically inferred from the Scala value that you specify as the response body.
+
+Ok("Hello World!") set the Content-Type header to text/plain
+Ok(<message>Hello World!</message>) will set the Content-Type header to application/xml
+Tip: this is done via the play.api.http.ContentTypeOf type class.
+
+and you can change it
+
+val htmlResult = Ok(<h1>Hello World!</h1>).as("text/html")
+or even better, using:
+
+val htmlResult2 = Ok(<h1>Hello World!</h1>).as(HTML)
+
+###### Manipulating HTTP headers
+
+<pre>
+val result = Ok("Hello World!").withHeaders(
+  CACHE_CONTROL -> "max-age=3600",
+  ETAG -> "xx")
+</pre>
+
+previous value will be automatically discarded
+
+###### Setting and discarding cookies
+
+<pre>
+val result = Ok("Hello world").withCookies(
+  Cookie("theme", "blue"))
+
+val result2 = result.discardingCookies(DiscardingCookie("theme")) // Also, to discard a Cookie previously stored on the Web browser: 
+
+</pre>
+
+###### Changing the charset for text based HTTP responses
+
+The charset is handled automatically via the play.api.mvc.Codec type class. Just import an implicit instance of play.api.mvc.Codec in the current scope to change the charset that will be used by all operations:
+
+<pre><code>
+object Application extends Controller {
+
+  implicit val myCustomCharset = Codec.javaSupported("iso-8859-1")
+
+  def index = Action {
+    Ok(<h1>Hello World!</h1>).as(HTML)
+  }
+
+}
+</code></pre>
+
+Now if you are wondering how the HTML method works, here it is how it is defined:
+
+def HTML(implicit codec: Codec) = {
+  "text/html; charset=" + codec.charset
+}
+You can do the same in your API if you need to handle the charset in a generic way.
+
+
+
+
+
+
+##### Session and Flash scopes
+
+Of course, cookie values are signed with a secret key so the client can’t modify the cookie data (or it will be invalidated).
+
+The Play Session is not intended to be used as a cache. If you need to cache some data related to a specific Session, you can use the Play built-in cache mechanism and store a unique ID in the user Session to keep them related to a specific user.
+
+There is no technical timeout for the Session. It expires when the user closes the web browser. If you need a functional timeout for a specific application, just store a timestamp into the user Session and use it however your application needs (e.g. for a maximum session duration, maximum inactivity duration, etc.).
+
+###### Reading a Session value
+
+you can retrieve the incoming Session from the HTTP request:
+
+def index = Action { request =>
+  request.session.get("connected").map { user =>
+    Ok("Hello " + user)
+  }.getOrElse {
+    Unauthorized("Oops, you are not connected")
+  }
+}
+
+Alternatively you can retrieve the Session implicitly from a request:
+
+def index = Action { implicit request =>
+  session.get("connected").map { user =>
+    Ok("Hello " + user)
+  }.getOrElse {
+    Unauthorized("Oops, you are not connected")
+  }
+}
+
+###### Storing data in the Session
+
+As the Session is just a Cookie, it is also just an HTTP header. You can manipulate the session data the same way you manipulate other results properties:
+
+Ok("Hello World!").withSession(
+  session + ("saidHello" -> "yes"))
+
+Ok("Theme reset!").withSession(
+  session - "theme")
+
+Ok("Bye").withNewSession // Discarding the whole session
+
+###### Flash scope
+
+The Flash scope works exactly like the Session, but with two differences:
+
+* data are kept for only one request
+* the Flash cookie is not signed, making it possible for the user to modify it.
+
+Important: The Flash scope should only be used to transport success/error messages on simple non-Ajax applications. As the data are just kept for the next request and because there are no guarantees to ensure the request order in a complex Web application, the Flash scope is subject to race conditions.
+
+Here are a few examples using the Flash scope:
+
+def index = Action { implicit request =>
+  Ok {
+    flash.get("success").getOrElse("Welcome!")
+  }
+}
+
+def save = Action {
+  Redirect("/home").flashing(
+    "success" -> "The item has been created")
+}
+
+To retrieve the Flash scope value in your view, just add an implicit with Flash:
+@()(implicit flash: Flash) ... 
+@flash.get("success").getOrElse("Welcome!") ...
+
+If the error ‘could not find implicit value for parameter flash: play.api.mvc.Flash’ is raised then this is because your Action didn’t import a request object. Add an “implicit request=>” as show below:
+
+def index() = Action {
+  implicit request =>
+    Ok(views.html.Application.index())
+}
+
+
+
+##### Body parsers
+
+An HTTP PUT or POST request contains a body. This body can use any format, specified in the Content-Type request header. In Play, a body parser transforms this request body into a Scala value.
+
+A BodyParser[A] is basically an [[Iteratee[Array[Byte],A]|Iteratees]], meaning that it receives chunks of bytes (as long as the web browser uploads some data) and computes a value of type A as result.
+
+Note: That’s why a body parser is not really an Iteratee[Array[Byte],A] but more precisely a Iteratee[Array[Byte],Either[Result,A]], meaning that it has the opportunity to send directly an HTTP result itself (typically 400 BAD_REQUEST, 412 PRECONDITION_FAILED or 413 REQUEST_ENTITY_TOO_LARGE) if it decides that it is not able to compute a correct value for the request body
+
+Once the body parser finishes its job and gives back a value of type A, the corresponding Action function is executed and the computed body value is passed into the request.
+
+###### More about Actions
+
+Let’s have a more precise look at the Action trait:
+
+trait Action[A] extends (Request[A] => Result) {
+  def parser: BodyParser[A]
+}
+
+First we see that there is a generic type A, and then that an action must define a BodyParser[A]. With Request[A] being defined as:
+
+trait Request[+A] extends RequestHeader {
+  def body: A
+}
+
+To summarize, an Action[A] uses a BodyParser[A] to retrieve a value of type A from the HTTP request, and to build a Request[A] object that is passed to the action code.
+
+###### Default body parser: AnyContent
+
+This body parser checks the Content-Type header and decides what kind of body to process:
+
+* text/plain: String
+* application/json: JsValue
+* application/xml, text/xml or application/XXX+xml: NodeSeq
+* application/form-url-encoded: Map[String, Seq[String]]
+* multipart/form-data: MultipartFormData[TemporaryFile]
+* any other content type: RawBuffer
+
+For example:
+
+def save = Action { request =>
+  val body: AnyContent = request.body
+  val textBody: Option[String] = body.asText
+
+  // Expecting text body
+  textBody.map { text =>
+    Ok("Got: " + text)
+  }.getOrElse {
+    BadRequest("Expecting text/plain request body")
+  }
+}
+
+###### Specifying a body parser
+
+The body parsers available in Play are defined in play.api.mvc.BodyParsers.parse.
+
+So for example, to define an action expecting a text body (as in the previous example):
+
+def save = Action(parse.text) { request =>
+  Ok("Got: " + request.body)
+}
+
+Alternatively we can use:
+
+def save = Action(parse.tolerantText) { request =>
+  Ok("Got: " + request.body)
+}
+This one doesn’t check the Content-Type header and always loads the request body as a String.
+
+Here is another example, which will store the request body in a file:
+
+def save = Action(parse.file(to = new File("/tmp/upload"))) { request =>
+  Ok("Saved the request content to " + request.body)
+}
+
+###### Combining body parsers
+
+改进上传文件的例子
+
+val storeInUserFile = parse.using { request =>
+  request.session.get("username").map { user =>
+    file(to = new File("/tmp/" + user + ".upload"))
+  }.getOrElse {
+    sys.error("You don't have the right to upload here")
+  }
+}
+
+def save = Action(storeInUserFile) { request =>
+  Ok("Saved the request content to " + request.body)
+}
+
+###### Max content length
+
+Text based body parsers (such as text, json, xml or formUrlEncoded) use a maximum content length because they have to load all of the content into memory.
+
+There is a default content length (the default is 100KB), but you can also specify it inline:
+
+// Accept only 10KB of data.
+def save = Action(parse.text(maxLength = 1024 * 10)) { request =>
+  Ok("Got: " + text)
+}
+Tip: The default content size can be defined in application.conf:
+
+parsers.text.maxLength=128K
+
+You can also wrap any body parser with maxLength:
+
+// Accept only 10KB of data.
+def save = Action(parse.maxLength(1024 * 10, storeInUserFile)) { request =>
+  Ok("Saved the request content to " + request.body)
+
+##### Actions composition
+
+This chapter introduces several ways of defining generic action functionality.
+
+###### Custom action builders @Deprecated
+
+These methods for building actions are actually all defined by a trait called ActionBuilder, and the Action object that we use to declare our actions is just an instance of this trait. By implementing your own ActionBuilder, you can declare reusable action stacks, that can then be used to build actions.
+
+Let’s start with the simple example of a logging decorator, we want to log each call to this action.
+
+The first way is to implement this functionality in the invokeBlock method, which is called for every action built by the ActionBuilder:
+
+<pre>
+import play.api.mvc._
+
+object LoggingAction extends ActionBuilder[Request] {
+  def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[SimpleResult]) = {
+    Logger.info("Calling action")
+    block(request)
+  }
+}
+</pre>
+
+Now we can use it the same way we use Action:
+
+def index = LoggingAction {
+  Ok("Hello World")
+}
+
+Since ActionBuilder provides all the different methods of building actions, this also works with, for example, declaring a custom body parser:
+
+def submit = LoggingAction(parse.text) { request =>
+  Ok("Got a body " + request.body.length + " bytes long")
+}
+
+###### Composing actions
+
+使用组合，侵入性小
+
+Reusable action code can be implemented by wrapping actions:
+
+import play.api.mvc._
+
+case class Logging[A](action: Action[A]) extends Action[A] {
+
+  def apply(request: Request[A]): Future[SimpleResult] = {
+    Logger.info("Calling action")
+    action(request)
+  }
+
+  lazy val parser = action.parser
+}
+
+We can also use the Action action builder to build actions without defining our own action class:
+
+import play.api.mvc._
+
+def logging[A](action: Action[A])= Action.async(action.parser) { request =>
+  Logger.info("Calling action")
+  action(request)
+}
+Actions can be mixed in to action builders using the composeAction method:
+
+object LoggingAction extends ActionBuilder[Request] {
+  def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[SimpleResult]) = {
+    block(request)
+  }
+  override def composeAction[A](action: Action[A]) = new Logging(action)
+}
+
+Now the builder can be used in the same way as before:
+
+def index = LoggingAction {
+  Ok("Hello World")
+}
+We can also mix in wrapping actions without the action builder:
+
+def index = Logging {
+  Action {
+    Ok("Hello World")
+  }
+}
+
+###### More complicated actions
+
+So far we’ve only shown actions that don’t impact the request at all. Of course, we can also read and modify the incoming request object:
+
+import play.api.mvc._
+
+def xForwardedFor[A](action: Action[A]) = Action.async(action.parser) { request =>
+  val newRequest = request.headers.get("X-Forwarded-For").map { xff =>
+    new WrappedRequest[A](request) {
+      override def remoteAddress = xff
+    }
+  } getOrElse request
+  action(newRequest)
+}
+
+Note: Play already has built in support for X-Forwarded-For headers.
+
+We could block the request:
+
+import play.api.mvc._
+
+def onlyHttps[A](action: Action[A]) = Action.async(action.parser) { request =>
+  request.headers.get("X-Forwarded-Proto").collect {
+    case "https" => action(request)
+  } getOrElse {
+    Future.successful(Forbidden("Only HTTPS requests allowed"))
+  }
+}
+
+And finally we can also modify the returned result:
+
+import play.api.mvc._
+import play.api.libs.concurrent.Execution.Implicits._
+
+def addUaHeader[A](action: Action[A]) = Action.async(action.parser) { request =>
+  action(request).map(_.withHeaders("X-UA-Compatible" -> "Chrome=1"))
+}
+
+###### Different request types
+
+The ActionBuilder trait is parameterised to allow building actions using different request types. The invokeBlock method can translate the incoming request to whatever request type it wants. This is useful for many things, for example, authentication, to attach a user object to the current request, or to share logic to load objects from a database.
+
+
+Let’s consider a REST API that works with objects of type Item. There may be many routes under the /item/:itemId path, and each of these need to look up the item. They may also share the same authorisation properties. In this case, it may be useful to put this logic into an action builder.
+
+First of all, we’ll create a request object that adds an Item:
+
+import play.api.mvc._
+
+class RequestWithItem[A](val item: Item, request: Request[A]) extends WrappedRequest[A](request)
+Now we’ll create an action builder that looks up that item when the request is made. Note that this action builder is defined inside a method that takes the id of the item:
+
+def ItemAction(itemId: String) = new ActionBuilder[RequestWithItem] {
+  def invokeBlock[A](request: Request[A], block: (RequestWithItem[A]) => Future[SimpleResult]) = {
+    ItemDao.findById(itemId).map { item =>
+      block(new RequestWithItem(item, request))
+    } getOrElse {
+      Future.successful(NotFound)
+    }
+  }
+}
+Now we can use this action builder for each item:
+
+def tagItem(itemId: String, tag: String) = ItemAction(itemId) { request =>
+  request.item.addTag(tag)
+  Ok
+}
+
+Authentication
+One of the most common use cases for action composition is authentication. We can easily implement our own authentication action builder like this:
+
+import play.api.mvc._
+
+class AuthenticatedRequest[A](val username: String, request: Request[A]) extends WrappedRequest[A](request)
+
+object Authenticated extends ActionBuilder[AuthenticatedRequest] {
+  def invokeBlock[A](request: Request[A], block: (AuthenticatedRequest[A]) => Future[SimpleResult]) = {
+    request.session.get("username").map { username =>
+      block(new AuthenticatedRequest(username, request))
+    } getOrElse {
+      Future.successful(Forbidden)
+    }
+  }
+}
+
+def currentUser = Authenticated { request =>
+  Ok("The current user is " + request.username)
+}
+Play also provides a built in authentication action builder. Information on this and how to use it can be found here.
+http://www.playframework.com/documentation/2.2.x/api/scala/index.html#play.api.mvc.Security$$AuthenticatedBuilder$
+
+Note: The built in authentication action builder is just a convenience helper to minimise the code necessary to implement authentication for simple cases, its implementation is very similar to the example above.
+
+If you have more complex requirements than can be met by the built in authentication action, then implementing your own is not only simple, it is recommended.
+
+Play also provides a global filter API , which is useful for global cross cutting concerns.
+http://www.playframework.com/documentation/2.2.x/ScalaHttpFilters
+
+
+
+
+
+
+
+
+
+
+##### Content negotiation
+
+Content negotiation is a mechanism that makes it possible to serve different representation of a same resource (URI). It is useful e.g. for writing Web Services supporting several output formats (XML, JSON, etc.). Server-driven negotiation is essentially performed using the Accept* requests headers. You can find more information on content negotiation in the HTTP specification.
+
+略
+
+
+
+
+
+#### Asynchronous HTTP programming
+
+##### Handling asynchronous results
+
+A Future[Result] will eventually be redeemed with a value of type Result. By giving a Future[Result] instead of a normal Result, we are able to quickly generate the result without blocking. Then, Play will serve this result as soon as the promise is redeemed.
+
+The web client will be blocked while waiting for the response, but nothing will be blocked on the server, and server resources can be used to serve other clients.
+
+
+###### How to create a Future[Result]
+
+To create a Future[Result] we need another future first: the future that will give us the actual value we need to compute the result:
+
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+
+val futurePIValue: Future[Double] = computePIAsynchronously()
+val futureResult: Future[SimpleResult] = futurePIValue.map { pi =>
+  Ok("PI value computed: " + pi)
+}
+
+All of Play’s asynchronous API calls give you a Future. This is the case whether you are calling an external web service using the play.api.libs.WS API, or using Akka to schedule asynchronous tasks or to communicate with actors using play.api.libs.Akka.
+
+Here is a simple way to execute a block of code asynchronously and to get a Future:
+
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+
+val futureInt: Future[Int] = scala.concurrent.Future {
+  intensiveComputation()
+}
+
+It’s important to understand which thread code runs on with futures. In the two code blocks above, there is an import on Plays default execution context. This is an implicit parameter that gets passed to all methods on the future API that accept callbacks. The execution context will often be equivalent to a thread pool, though not necessarily.
+
+###### Returning futures
+
+While we were using the Action.apply builder methods to build actions until now, to send an asynchronous result, we need to use the Action.async buider method:
+
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+
+def index = Action.async {
+  val futureInt = scala.concurrent.Future { intensiveComputation() }
+  futureInt.map(i => Ok("Got result: " + i))
+}
+
+###### Handling time-outs
+
+It is often useful to handle time-outs properly, to avoid having the web browser block and wait if something goes wrong. You can easily compose a promise with a promise timeout to handle these cases:
+
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import scala.concurrent.duration._
+
+def index = Action.async {
+  val futureInt = scala.concurrent.Future { intensiveComputation() }
+  val timeoutFuture = play.api.libs.concurrent.Promise.timeout("Oops", 1.second)
+  Future.firstCompletedOf(Seq(futureInt, timeoutFuture)).map {
+    case i: Int => Ok("Got result: " + i)
+    case t: String => InternalServerError(t)
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+##### Streaming HTTP responses
+
+###### Standard responses and Content-Length header
+
+Since HTTP 1.1, to keep a single connection open to serve several HTTP requests and responses, the server must send the appropriate Content-Length HTTP header along with the response.
+
+Actually, we previously saw that the response body is specified using a play.api.libs.iteratee.Enumerator:
+
+def index = Action {
+  SimpleResult(
+    header = ResponseHeader(200),
+    body = Enumerator("Hello World")
+  )
+}
+This means that to compute the Content-Length header properly, Play must consume the whole enumerator and load its content into memory.
+
+###### Sending large amounts of data
+
+wrong!!! load file fully in the memory
+
+def index = Action {
+
+  val file = new java.io.File("/tmp/fileToServe.pdf")
+  val fileContent: Enumerator[Array[Byte]] = Enumerator.fromFile(file)    
+    
+  SimpleResult(
+    header = ResponseHeader(200),
+    body = fileContent
+  )
+}
+
+That’s a problem for large files that we don’t want to load completely into memory. So to avoid that, we just have to specify the Content-Length header ourself.
+
+def index = Action {
+
+  val file = new java.io.File("/tmp/fileToServe.pdf")
+  val fileContent: Enumerator[Array[Byte]] = Enumerator.fromFile(file)    
+    
+  SimpleResult(
+    header = ResponseHeader(200, Map(CONTENT_LENGTH -> file.length.toString)),
+    body = fileContent
+  )
+}
+This way Play will consume the body enumerator in a lazy way, copying each chunk of data to the HTTP response as soon as it is available.
+
+
+###### Serving files
+Of course, Play provides easy-to-use helpers for common task of serving a local file:
+
+def index = Action {
+  Ok.sendFile(new java.io.File("/tmp/fileToServe.pdf"))
+}
+
+This helper will also compute the Content-Type header from the file name, and add the Content-Disposition header to specify how the web browser should handle this response. The default is to ask the web browser to download this file by adding the header Content-Disposition: attachment; filename=fileToServe.pdf to the HTTP response.
+
+You can also provide your own file name or inline:
+
+
+###### Chunked responses
+For now, it works well with streaming file content since we are able to compute the content length before streaming it. But what about dynamically computed content, with no content size available?
+
+For this kind of response we have to use Chunked transfer encoding.
+
+Chunked transfer encoding is a data transfer mechanism in version 1.1 of the Hypertext Transfer Protocol (HTTP) in which a web server serves content in a series of chunks. It uses the Transfer-Encoding HTTP response header instead of the Content-Length header, which the protocol would otherwise require. Because the Content-Length header is not used, the server does not need to know the length of the content before it starts transmitting a response to the client (usually a web browser). Web servers can begin transmitting responses with dynamically-generated content before knowing the total size of that content.
+
+The size of each chunk is sent right before the chunk itself, so that a client can tell when it has finished receiving data for that chunk. Data transfer is terminated by a final chunk of length zero.
+
+http://en.wikipedia.org/wiki/Chunked_transfer_encoding
+
+The advantage is that we can serve the data live, meaning that we send chunks of data as soon as they are available. The drawback is that since the web browser doesn’t know the content size, it is not able to display a proper download progress bar.
+
+def index = Action {
+
+  val data = getDataStream
+  val dataContent: Enumerator[Array[Byte]] = Enumerator.fromStream(data)
+  
+  ChunkedResult(
+    header = ResponseHeader(200),
+    chunks = dataContent
+  )
+}
+
+As always, there are helpers available to do this:
+
+def index = Action {
+
+  val data = getDataStream
+  val dataContent: Enumerator[Array[Byte]] = Enumerator.fromStream(data)
+  
+  Ok.chunked(dataContent)
+}
+Of course, we can use any Enumerator to specify the chunked data:
+
+def index = Action {
+  Ok.chunked(
+    Enumerator("kiki", "foo", "bar").andThen(Enumerator.eof)
+  )
+}
+We can inspect the HTTP response sent by the server:
+
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Transfer-Encoding: chunked
+
+4
+kiki
+3
+foo
+3
+bar
+0
+We get three chunks followed by one final empty chunk that closes the response.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##### Comet sockets
+
+###### Using chunked responses to create Comet sockets
+
+A good use for Chunked responses is to create Comet sockets. A Comet socket is just a chunked text/html response containing only <script> elements. At each chunk we write a <script> tag that is immediately executed by the web browser. This way we can send events live to the web browser from the server: for each message, wrap it into a <script> tag that calls a JavaScript callback function, and writes it to the chunked response.
+
+et’s write a first proof-of-concept: an enumerator that generates <script> tags that each call the browser console.log JavaScript function:
+
+def comet = Action {
+  val events = Enumerator(
+    """<script>console.log('kiki')</script>""",
+    """<script>console.log('foo')</script>""",
+    """<script>console.log('bar')</script>"""
+  )
+  Ok.stream(events >>> Enumerator.eof).as(HTML)
+}
+If you run this action from a web browser, you will see the three events logged in the browser console.
+
+Tip: Writing events >>> Enumerator.eof is just another way of writing events.andThen(Enumerator.eof)
+
+refactoring
+
+import play.api.templates.Html
+
+// Transform a String message into an Html script tag
+val toCometMessage = Enumeratee.map[String] { data =>
+  Html("""<script>console.log('""" + data + """')</script>""")
+}
+
+def comet = Action {
+  val events = Enumerator("kiki", "foo", "bar")
+  Ok.stream((events &> toCometMessage) >>> Enumerator.eof)
+}
+
+Tip: Writing events >>> Enumerator.eof &> toCometMessage is just another way of writing events.andThen(Enumerator.eof).through(toCometMessage)
+
+
+###### Using the play.api.libs.Comet helper
+
+refactoring by helper
+
+def comet = Action {
+  val events = Enumerator("kiki", "foo", "bar")
+  Ok.stream((events &> Comet(callback = "console.log")) >>> Enumerator.eof)
+}
+
+Note: Actually it does more, like pushing an initial blank buffer data for browser compatibility, and it supports both String and JSON messages. It can also be extended via type classes to support more message types.
+
+###### The forever iframe technique ?
+
+The standard technique to write a Comet socket is to load an infinite chunked comet response in an HTML iframe and to specify a callback calling the parent frame:
+
+def comet = Action {
+  val events = Enumerator("kiki", "foo", "bar")
+  Ok.stream((events &> Comet(callback = "parent.cometMessage")) >>> Enumerator.eof)
+}
+With an HTML page like:
+
+<script type="text/javascript">
+  var cometMessage = function(event) {
+    console.log('Received event: ' + event)
+  }
+</script>
+
+<iframe src="/comet"></iframe>
+
+
+
+
+
+##### WebSockets
+
+###### Using WebSockets instead of Comet sockets
+A Comet socket is a kind of hack for sending live events to the web browser. Also, it only supports one-way communication from the server to the client. To push events to the server, the web browser has to send Ajax requests.
+
+Modern web browsers natively support two-way live communication via WebSockets.
+
+WebSocket is a web technology that provides bi-directional, full-duplex communication channels, over a single Transmission Control Protocol (TCP) socket. The WebSocket API is being standardized by the W3C, and the WebSocket protocol has been standardized by the IETF as RFC 6455.
+
+WebSocket is designed to be implemented in web browsers and web servers, but it can be used by any client or server application. Because ordinary TCP connections to port numbers other than 80 are frequently blocked by administrators outside of home environments, it can be used as a way to circumvent these restrictions and provide similar functionality with some additional protocol overhead while multiplexing several WebSocket services over a single TCP port.
+
+WebSocket is also useful for web applications that require real-time bi-directional communication. Before the implementation of WebSocket, such bi-directional communication was only possible using Comet channels; however, Comet is not trivial to implement reliably, and due to the TCP handshaking and HTTP header overhead, it may be inefficient for small messages. The WebSocket protocol aims to solve these problems without compromising the web’s security assumptions.
+
+http://en.wikipedia.org/wiki/WebSocket
+
+
+###### Handling WebSockets
+
+Until now, we were using Action instances to handle standard HTTP requests and send back standard HTTP responses. WebSockets are a totally different beast and can’t be handled via standard Action.
+
+To handle a WebSocket request, use a WebSocket instead of an Action:
+
+def index = WebSocket.using[String] { request => 
+  
+  // Log events to the console
+  val in = Iteratee.foreach[String](println).map { _ =>
+    println("Disconnected")
+  }
+  
+  // Send a single 'Hello!' message
+  val out = Enumerator("Hello!")
+  
+  (in, out)
+}
+
+后面略
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### The template engine
+
+
+##### Templates syntax
+
+Templates are compiled as standard Scala functions, following a simple naming convention. If you create a views/Application/index.scala.html template file, it will generate a views.html.Application.index class that has an apply() method.
+
+For example, here is a simple template:
+
+@(customer: Customer, orders: List[Order])
+
+<h1>Welcome @customer.name!</h1>
+
+<ul>
+@for(order <- orders) {
+  <li>@order.title</li>
+}
+</ul>
+You can then call this from any Scala code as you would normally call a method on a class:
+
+val content = views.html.Application.index(c, o)
+
+###### Syntax: the magic ‘@’ character
+
+
+The Scala template uses @ as the single special character. Every time this character is encountered, it indicates the beginning of a dynamic statement. You are not required to explicitly close the code block - the end of the dynamic statement will be inferred from your code:
+
+Hello @customer.name!
+       ^^^^^^^^^^^^^
+       Dynamic code
+
+Hello @(customer.firstName + customer.lastName)!
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    Dynamic Code
+
+Hello @{val name = customer.firstName + customer.lastName; name}!
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                             Dynamic Code
+
+escape it by using @@:
+
+My email is bob@@example.com
+
+
+###### Template parameters
+
+A template is like a function, so it needs parameters, which must be declared at the top of the template file:
+
+@(customer: Customer, orders: List[Order])
+You can also use default values for parameters:
+
+@(title: String = "Home")
+Or even several parameter groups:
+
+@(title: String)(body: Html)
+
+###### Iterating
+
+<ul>
+@for(p <- products) {
+  <li>@p.name ($@p.price)</li>
+}
+</ul>
+
+###### If-blocks
+
+@if(items.isEmpty) {
+  <h1>Nothing to display</h1>
+} else {
+  <h1>@items.size items!</h1>
+}
+
+###### Declaring reusable blocks
+You can create reusable code blocks:
+
+@display(product: Product) = {
+  @product.name ($@product.price)
+}
+
+<ul>
+@for(product <- products) {
+  @display(product)
+}
+</ul>
+and reusable pure code blocks:
+
+@title(text: String) = @{
+  text.split(' ').map(_.capitalize).mkString(" ")
+}
+
+<h1>@title("hello world")</h1>
+Note: Declaring code block this way in a template can be sometime useful but keep in mind that a template is not the best place to write complex logic. It is often better to externalize these kind of code in a Java class (that you can store under the views/ package as well if your want).
+
+By convention a reusable block defined with a name starting with implicit will be marked as implicit:
+
+@implicitFieldConstructor = @{ MyFieldConstructor() }
+
+###### Declaring reusable values
+
+You can define scoped values using the defining helper:
+
+@defining(user.firstName + " " + user.lastName) { fullName =>
+  <div>Hello @fullName</div>
+}
+
+
+###### Import statements
+You can import whatever you want at the beginning of your template (or sub-template):
+
+@(customer: Customer, orders: List[Order])
+
+@import utils._
+
+...
+To make an absolute resolution, use root prefix in the import statement.
+
+@import _root_.company.product.core._
+If you have common imports, which you need in all templates, you can declare in build.sbt
+
+templatesImport += "com.abc.backend._"
+
+###### Comments
+You can write server side block comments in templates using @* *@:
+
+@*********************
+* This is a comment *
+*********************@
+You can put a comment on the first line to document your template into the Scala API doc:
+
+###### Escaping
+By default, dynamic content parts are escaped according to the template type’s (e.g. HTML or XML) rules. If you want to output a raw content fragment, wrap it in the template content type.
+
+For example to output raw HTML:
+
+<p>
+  @Html(article.content)
+</p>
+
+
+##### Common use cases
+
+###### Layout
+Let’s declare a views/main.scala.html template that will act as a main layout template:
+
+@(title: String)(content: Html)
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>@title</title>
+  </head>
+  <body>
+    <section class="content">@content</section>
+  </body>
+</html>
+
+As you can see, this template takes two parameters: a title and an HTML content block. Now we can use it from another views/Application/index.scala.html template:
+
+@main(title = "Home") {
+    
+  <h1>Home page</h1>
+    
+}
+Note: We sometimes use named parameters(like @main(title = "Home"), sometimes not like @main("Home"). It is as you want, choose whatever is clearer in a specific context.
+
+
+###### Tags (they are just functions, right?)
+Let’s write a simple views/tags/notice.scala.html tag that displays an HTML notice:
+
+@(level: String = "error")(body: (String) => Html)
+ 
+@level match {
+    
+  case "success" => {
+    <p class="success">
+      @body("green")
+    </p>
+  }
+
+  case "warning" => {
+    <p class="warning">
+      @body("orange")
+    </p>
+  }
+
+  case "error" => {
+    <p class="error">
+      @body("red")
+    </p>
+  }
+    
+}
+And now let’s use it from another template:
+
+@import tags._
+ 
+@notice("error") { color =>
+  Oops, something is <span style="color:@color">wrong</span>
+}
+
+###### Includes
+Again, there’s nothing special here. You can just call any other template you like (and in fact any other function coming from anywhere at all):
+
+<h1>Home</h1>
+ 
+<div id="side">
+  @common.sideBar()
+</div>
+
+###### moreScripts and moreStyles equivalents
+To define old moreScripts or moreStyles variables equivalents (like on Play! 1.x) on a Scala template, you can define a variable in the main template like this :
+
+@(title: String, scripts: Html = Html(""))(content: Html)
+
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>@title</title>
+        <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
+        <link rel="shortcut icon" type="image/png" href="@routes.Assets.at("images/favicon.png")">
+        <script src="@routes.Assets.at("javascripts/jquery-1.7.1.min.js")" type="text/javascript"></script>
+        @scripts
+    </head>
+    <body>
+        <div class="navbar navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <a class="brand" href="#">Movies</a>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            @content
+        </div>
+    </body>
+</html>
+
+And on an extended template that need an extra script :
+
+@scripts = {
+    <script type="text/javascript">alert("hello !");</script>
+}
+
+@main("Title",scripts){
+
+   Html content here ...
+
+}
+And on an extended template that not need an extra script, just like this :
+
+@main("Title"){
+   Html content here ...
+}
+
+
+##### Custom format
+
+###### Adding support for a custom format to the template engine
+
+The built-in template engine supports common template formats (HTML, XML, etc.) but you can easily add support for your own formats, if needed. This page summarizes the steps to follow to support a custom format.
+
+###### Overview of the the templating process
+The template engine builds its result by appending static and dynamic content parts of a template. Consider for instance the following template:
+
+foo @bar baz
+It consists in two static parts (foo  and  baz) around one dynamic part (bar). The template engine concatenates these parts together to build its result. Actually, in order to prevent cross-site scripting attacks, the value of bar can be escaped before being concatenated to the rest of the result. This escaping process is specific to each format: e.g. in the case of HTML you want to transform “<” into “&lt;”.
+
+How does the template engine know which format correspond to a template file? It looks at its extension: e.g. if it ends with .scala.html it associates the HTML format to the file.
+
+Finally, you usually want your template files to be used as the body of your HTTP responses, so you have to define how to make a Play result from a template rendering result.
+
+In summary, to support your own template format you need to perform the following steps:
+
+Implement the text integration process for the format ;
+Associate a file extension to the format ;
+Eventually tell Play how to send the result of a template rendering as an HTTP response body.
+
+后略
+
+
+
+
+#### Form submission and validation
+
+##### Handling form submission
+
+Play’s form handling approach is based around the concept of binding data. When data comes in from a POST request, Play will look for formatted values and bind them to a Form object. From there, Play can use the bound form to value a case class with data, call custom validations, and so on.
+
+Typically forms are used directly from a Controller instance. However, Form definitions do not have to match up exactly with case classes or models: they are purely for handling input and it is reasonable to use a distinct Form for a distinct POST.
+
+###### Imports
+To use forms, import the following packages into your class:
+
+import play.api.data._
+import play.api.data.Forms._
+
+
+###### Form Basics
+We’ll go through the basics of form handling:
+
+* defining a form,
+* defining constraints in the form,
+* validating the form in an action,
+* displaying the form in a view template,
+* and finally, processing the result (or errors) of the form in a view template.
+
+http://www.playframework.com/documentation/2.2.x/resources/manual/scalaGuide/main/forms/images/lifecycle.png
+
+
+###### Defining a form
+First, define a case class which contains the elements you want in the form. 
+
+case class UserData(name: String, age: Int)
+
+The function of a Form is to transform form data into a bound instance of a case class, and we define it like follows:
+
+val userForm = Form(
+  mapping(
+    "name" -> text,
+    "age" -> number
+  )(UserData.apply)(UserData.unapply)
+)
+
+http://www.playframework.com/documentation/2.2.x/api/scala/index.html#play.api.data.Forms$
+
+The Forms object defines the mapping method. This method takes the names and constraints of the form, and also takes two functions: an apply function and an unapply function. Because UserData is a case class, we can plug its apply and unapply methods directly into the mapping method.
+
+Note: Case classes will only map up to 22 different fields, due to compiler limitations. If you have more than 22 fields in your form, you should break down your forms using lists or nested values.
+https://issues.scala-lang.org/browse/SI-7099
+
+A form will create UserData instance with the bound values when given a Map:
+
+val anyData = Map("name" -> "bob", "age" -> "21")
+val userData = userForm.bind(anyData).get
+
+But most of the time you’ll use forms from within an Action, with data provided from the request. Form contains bindFromRequest, which will take a request as an implicit parameter. If you define an implicit request, then bindFromRequest will find it.
+
+val userData = userForm.bindFromRequest.get
+
+Note: There is a catch to using get here. If the form cannot bind to the data, then get will throw an exception. We’ll show a safer way of dealing with input in the next few sections.
+
+You are not limited to using case classes in your form mapping. As long as the apply and unapply methods are properly mapped, you can pass in anything you like, such as tuples using the Forms.tuple mapping or model case classes. However, there are several advantages to defining a case class specifically for a form:
+
+* Form specific case classes are convenient. 
+* Form specific case classes are powerful
+* Form specific case classes are targeted specifically to the Form
+In addition, if there is not a direct 1:1 mapping between the form and the model, then sensitive fields must be explicitly ignored to prevent a parameter tampering attack.
+https://www.owasp.org/index.php/Web_Parameter_Tampering
+
+###### Defining constraints on the form
+
+val userFormConstraints2 = Form(
+  mapping(
+    "name" -> nonEmptyText,
+    "age" -> number(min = 0, max = 100)
+  )(UserData.apply)(UserData.unapply)
+)
+
+The out of the box constraints are defined on the Forms object:
+http://www.playframework.com/documentation/2.2.x/api/scala/index.html#play.api.data.Forms$
+
+* text: maps to scala.String, optionally takes minLength and maxLength.
+* nonEmptyText: maps to scala.String, optionally takes minLength and maxLength.
+* number: maps to scala.Int, optionally takes min, max, and strict.
+* longNumber: maps to scala.Long, optionally takes min, max, and strict.
+* bigDecimal: takes precision and scale.
+* date: maps to java.util.Date, optionally takes pattern and timeZone.
+* email: maps to scala.String, using an email regular expression.
+* boolean: maps to scala.Boolean.
+* checked: maps to scala.Boolean.
+
+###### Defining ad-hoc constraints
+
+You can define your own ad-hoc constraints on the case classes using the validation package.
+http://www.playframework.com/documentation/2.2.x/api/scala/index.html#play.api.data.validation.package
+
+val userFormConstraints = Form(
+  mapping(
+    "name" -> text.verifying(nonEmpty),
+    "age" -> number.verifying(min(0), max(100))
+  )(UserData.apply)(UserData.unapply)
+)
+
+You can also define ad-hoc constraints on the case classes themselves:
+
+def validate(name: String, age: Int) = {
+  name match {
+    case "bob" if age >= 18 =>
+      Some(UserData(name, age))
+    case "admin" =>
+      Some(UserData(name, age))
+    case _ =>
+      None
+  }
+}
+
+val userFormConstraintsAdHoc = Form(
+  mapping(
+    "name" -> text,
+    "age" -> number
+  )(UserData.apply)(UserData.unapply) verifying("Failed form constraints!", fields => fields match {
+    case userData => validate(userData.name, userData.age).isDefined
+  })
+)
+
+####### Validating a form in an Action
+
+Now that we have constraints, we can validate the form inside an action, and process the form with errors.
+
+We do this using the fold method, which takes two functions: the first is called if the binding fails, and the second is called if the binding succeeds.
+
+userForm.bindFromRequest.fold(
+  formWithErrors => {
+    // binding failure, you retrieve the form containing errors:
+    BadRequest(views.html.user(formWithErrors))
+  },
+  userData => {
+    /* binding success, you get the actual value. */
+    val newUser = models.User(userData.name, userData.age)
+    val id = models.User.create(newUser)
+    Redirect(routes.Application.home(id))
+  }
+)
+
+In the failure case, we render the page with BadRequest, and pass in the form with errors as a parameter to the page. If we use the view helpers (discussed below), then any errors that are bound to a field will be rendered in the page next to the field.
+
+In the success case, we’re sending a Redirect with a route to routes.Application.home here instead of rendering a view template. This pattern is called Redirect after POST, and is an excellent way to prevent duplicate form submissions.
+http://en.wikipedia.org/wiki/Post/Redirect/Get
+
+Note: “Redirect after POST” is required when using flashing or other methods with flash scope, as new cookies will only be available after the redirected HTTP request.
+http://www.playframework.com/documentation/2.2.x/ScalaSessionFlash
+
+###### Showing forms in a view template
+
+Once you have a form, then you need to make it available to the template engine. You do this by including the form as a parameter to the view template. For user.scala.html, the header at the top of the page will look like this:
+
+@(userForm: Form[UserData])
+
+Because user.scala.html needs a form passed in, you should pass the empty userForm initially when rendering user.scala.html:
+
+def index = Action {
+  Ok(views.html.user(userForm))
+}
+
+The first thing is to be able to create the form tag. It is a simple view helper that creates a form tag and sets the action and method tag parameters according to the reverse route you pass in:
+http://www.playframework.com/documentation/2.2.x/api/scala/index.html#views.html.helper.form$
+
+@helper.form(action = routes.Application.userPost()) {
+  @helper.inputText(userForm("name"))
+  @helper.inputText(userForm("age"))
+}
+
+You can find several input helpers in the views.html.helper package. You feed them with a form field, and they display the corresponding HTML input, setting the value, constraints and displaying errors when a form binding fails.
+
+Note: You can use @import helper._ in the template to avoid prefixing helpers with @helper.
+
+There are several input helpers, but the most helpful are:
+
+* form: renders a form element.
+* inputText: renders a text input element.
+* inputPassword: renders a password input element.
+* inputDate: renders a date input element.
+* inputFile: renders a file input element.
+* inputRadioGroup: renders a radio input element.
+* select: renders a select element.
+* textarea: renders a textarea element.
+* checkbox: renders a checkbox element.
+* input: renders a generic input element (which requires explicit arguments).
+
+As with the form helper, you can specify an extra set of parameters that will be added to the generated Html:
+
+@helper.inputText(userForm("name"), 'id -> "name", 'size -> 30)
+The generic input helper mentioned above will let you code the desired HTML result:
+
+@helper.input(userForm("name")) { (id, name, value, args) =>
+    <input type="text" name="@name" id="@id" @toHtmlArgs(args)>
+}
+
+Note: All extra parameters will be added to the generated Html, unless they start with the _ character. Arguments starting with _ are reserved for field constructor arguments.
+http://www.playframework.com/documentation/2.2.x/ScalaCustomFieldConstructors
+
+For complex form elements, you can also create your own custom view helpers (using scala classes in the views package) and custom field constructors.
+http://www.playframework.com/documentation/2.2.x/ScalaCustomFieldConstructors
+
+###### Displaying errors in a view template
+The errors in a form take the form of Map[String,FormError] where FormError has:
+
+* key: should be the same as the field.
+* message: a message or a message key.
+* args: a list of arguments to the message.
+The form errors are accessed on the bound form instance as follows:
+
+* errors: returns all errors as Seq[FormError].
+* globalErrors: returns errors without a key as Seq[FormError].
+* error("name"): returns the first error bound to key as Option[FormError].
+* errors("name"): returns all errors bound to key as Seq[FormError].
+
+Errors attached to a field will render automatically using the form helpers, so @helper.inputText with errors can display as follows:
+
+<dl class="error" id="age_field">
+    <dt><label for="age">Age:</label></dt>
+    <dd><input type="text" name="age" id="age" value=""></dd>
+    <dd class="error">This field is required!</dd>
+    <dd class="error">Another error</dd>
+    <dd class="info">Required</dd>
+    <dd class="info">Another constraint</dd>
+</dl>
+
+Global errors that are not bound to a key do not have a helper and must be defined explicitly in the page:
+
+@if(userForm.hasGlobalErrors) {
+    <ul>
+    @userForm.globalErrors.foreach { error =>
+        <li>error.message</li>
+    }
+    </ul>
+}
+
+###### Mapping with tuples
+###### Mapping with single
+略
+
+###### Fill values
+Sometimes you’ll want to populate a form with existing values, typically for editing data:
+
+val filledForm = userForm.fill(UserData("Bob", 18))
+When you use this with a view helper, the value of the element will be filled with with the value:
+
+@helper.inputText(filledForm("name")) @* will render value="Bob" *@
+
+Fill is especially helpful for helpers that need lists or maps of values, such as the select and inputRadioGroup helpers. Use options to value these helpers with lists, maps and pairs.
+
+###### Nested values
+A form mapping can define nested values by using Forms.mapping inside an existing mapping:
+
+case class AddressData(street: String, city: String)
+
+case class UserAddressData(name: String, address: AddressData)
+val userFormNested: Form[UserAddressData] = Form(
+  mapping(
+    "name" -> text,
+    "address" -> mapping(
+      "street" -> text,
+      "city" -> text
+    )(AddressData.apply)(AddressData.unapply)
+  )(UserAddressData.apply)(UserAddressData.unapply)
+)
+Note: When you are using nested data this way, the form values sent by the browser must be named like address.street, address.city, etc.
+
+@helper.inputText(userFormNested("name"))
+@helper.inputText(userFormNested("address.street"))
+@helper.inputText(userFormNested("address.city"))
+
+###### Repeated values
+A form mapping can define repeated values using Forms.list or Forms.seq:
+
+case class UserListData(name: String, emails: List[String])
+val userFormRepeated = Form(
+  mapping(
+    "name" -> text,
+    "emails" -> list(email)
+  )(UserListData.apply)(UserListData.unapply)
+)
+When you are using repeated data like this, the form values sent by the browser must be named emails[0], emails[1], emails[2], etc.
+
+Now you have to generate as many inputs for the emails field as the form contains, using the repeat helper:
+
+@helper.inputText(myForm("name"))
+@helper.repeat(myForm("emails"), min = 1) { emailField =>
+    @helper.inputText(emailField)
+}
+The min parameter allows you to display a minimum number of fields even if the corresponding form data are empty.
+
+###### Optional values
+###### Ignored values
+略
+
+Putting it all together
+Play comes with a sample forms application in /samples/scala/forms. which has useful examples of how to generate complex forms. As example, here’s the Contacts controller.
+
+Given the case class Contact:
+
+case class Contact(firstname: String,
+                   lastname: String,
+                   company: Option[String],
+                   informations: Seq[ContactInformation])
+
+case class ContactInformation(label: String,
+                              email: Option[String],
+                              phones: List[String])
+Note that Contact contains a Seq with ContactInformation elements and a List of String. In this case, we can combine the nested mapping with repeated mappings (defined with Forms.seq and Forms.list, respectively).
+
+val contactForm: Form[Contact] = Form(
+
+  // Defines a mapping that will handle Contact values
+  mapping(
+    "firstname" -> nonEmptyText,
+    "lastname" -> nonEmptyText,
+    "company" -> optional(text),
+
+    // Defines a repeated mapping
+    "informations" -> seq(
+      mapping(
+        "label" -> nonEmptyText,
+        "email" -> optional(email),
+        "phones" -> list(
+          text verifying pattern("""[0-9.+]+""".r, error="A valid phone number is required")
+        )
+      )(ContactInformation.apply)(ContactInformation.unapply)
+    )
+  )(Contact.apply)(Contact.unapply)
+)
+And this code shows how an existing contact is displayed in the form using filled data:
+
+def editForm = Action {
+  val existingContact = Contact(
+    "Fake", "Contact", Some("Fake company"), informations = List(
+      ContactInformation(
+        "Personal", Some("fakecontact@gmail.com"), List("01.23.45.67.89", "98.76.54.32.10")
+      ),
+      ContactInformation(
+        "Professional", Some("fakecontact@company.com"), List("01.23.45.67.89")
+      ),
+      ContactInformation(
+        "Previous", Some("fakecontact@oldcompany.com"), List()
+      )
+    )
+  )
+  Ok(views.html.contact.form(contactForm.fill(existingContact)))
+}
+
+
+
+
+
+
+
+
+
+##### Protecting against CSRF
+
+Protecting against Cross Site Request Forgery
+
+Cross Site Request Forgery (CSRF) is a security exploit where an attacker tricks a victims browser into making a request using the victims session. Since the session token is sent with every request, if an attacker can coerce the victims browser to make a request on their behalf, the attacker can make requests on the users behalf.
+
+It is recommended that you familiarise yourself with CSRF, what the attack vectors are, and what the attack vectors are not. We recommend starting with this information from OWASP.
+https://www.owasp.org/index.php/Cross-Site_Request_Forgery_%28CSRF%29
+
+Simply put, an attacker can coerce a victims browser to make the following types of requests:
+
+* All GET requests
+* POST requests with bodies of type application/x-www-form-urlencoded, multipart/form-data and text/plain
+An attacker can not:
+
+* Coerce the browser to use other request methods such as PUT and DELETE
+* Coerce the browser to post other content types, such as application/json
+* Coerce the browser to send new cookies, other than those that the server has already set
+* Coerce the browser to set arbitrary headers, other than the normal headers the browser adds to requests
+
+Since GET requests are not meant to be mutative, there is no danger to an application that follows this best practice. So the only requests that need CSRF protection are POST requests with the above mentioned content types.
+
+###### Play’s CSRF protection
+。。。
+
+
+
+
+
+
+
+
+
+##### Custom Validations
+
+Note: This is an intentionally trivial example. Please consider using the OWASP guide for proper password security.
+https://www.owasp.org/index.php/Authentication_Cheat_Sheet#Implement_Proper_Password_Strength_Controls
+
+
+
+
+
+
+
+
+
+
+
+
+##### Custom Field Constructors
+
+略
+
+
+
+
+
+
+#### Working with Json
+
+The recommended way of dealing with JSON is using Play’s typeclass based JSON library, located at play.api.libs.json.
+
+For parsing JSON strings, Play uses the super-fast Java based JSON library, Jackson
+http://jackson.codehaus.org/
+
+
+
+
+
+
+
+
+
+
+
+
+##### Play Json Basics
+
+###### JSON is an AST (_Abstract Syntax Tree_)
+略
+
+###### Json Data Types
+The play.api.libs.json package contains the seven JSON data types, reflecting this structure.
+
+JsObject
+http://www.playframework.com/documentation/2.2.x/api/scala/index.html#play.api.libs.json.JsObject
+JsNull
+JsBoolean
+JsNumber
+JsArray
+JsString
+
+###### Other data types
+JsUndefined
+JsValue
+
+###### Working with JSON
+The entry point into Play’s JSON API is play.api.libs.json.Json. It provides the following methods:
+
+Json.parse : parses a string to JsValue
+Json.stringify : stringifies a JsValue using compact printer (NO line feed/indentation)
+Json.prettyPrint : stringifies a JsValue using pretty printer (line feed + indentation)
+Json.toJson[T](t: T)(implicit writes: Writes[T]) : tries to convert a Scala structure to a JsValue using the resolved implicit Writes[T]
+Json.fromJson[T](json: JsValue)(implicit reads: Reads[T]) : tries to convert a JsValue to a Scala structure using the resolved implicit Reads[T]
+Json.obj() : simplified syntax to create a JsObject
+Json.arr() : simplified syntax to create a JsArray
+
+###### Parsing a JSON String
+
+val json: JsValue = Json.parse(...)
+
+
+###### Constructing JSON directly
+
+import play.api.libs.json._
+
+Json.obj(
+  "users" -> Json.arr(
+    Json.obj(
+      "name" -> "Bob",
+      "age" -> 31,
+      "email" -> "bob@gmail.com"
+    ),
+    Json.obj(
+      "name" -> "Kiki",
+      "age" -> 25,
+      "email" -> JsNull
+    )
+  )
+)
+
+###### Serializing JSON
+Serializing a JsValue to its JSON String representation is easy:
+
+val jsonString: String = Json.stringify(json)
+
+###### Accessing Path in a JSON tree
+As soon as you have a JsValue you can navigate into the JSON tree. The API looks like the one provided to navigate into XML document by Scala using NodeSeq except you retrieve JsValue
+
+Simple path \
+
+val name: JsValue = json \ "user" \ "name"
+name === JsString("toto")
+
+Recursive path \\
+
+val emails: Seq[JsValue] = json \ "user" \\ "email"
+emails === Seq(JsString("toto@jmail.com"), JsString("tata@coldmail.com"))
+
+###### Converting JsValue to Scala Value
+
+Unsafe conversion with json.as[T]
+val name: String = (json \ "user" \ "name").as[String]
+
+This method however is unsafe, if the path is not found, or the conversion is not possible, a JsResultException is thrown, containing the error.
+
+Safer conversion with Option[T]
+val maybeName: Option[String] = (json \ "user" \ "name").asOpt[String]
+
+Safest conversion with validate[T]
+
+... 略
+
+Converting Recursive path \\
+
+
+Converting a Scala value to JsValue
+
+
+
+
+
+
+
+##### Json Reads/Writes/Format Combinators
+
+Please note this documentation was initially published as an article by Pascal Voitot (@mandubian) on mandubian.com
+http://mandubian.com/2012/09/08/unveiling-play-2-dot-1-json-api-part1-jspath-reads-combinators/
+https://github.com/mandubian
+
+
+	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
+	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
+
+
+
+
+
+
+
+
+
+##### Json Transformers
+##### Json Macro Inception
+##### Handling and serving Json requests
+
+
+
+
+#### Working with XML
+##### Handling and serving XML requests
+Uploading files in a form using multipart/form-data
+Direct file upload
+Writing your own body parser
+
+#### Handling file upload
+##### Direct upload and multipart/form-data
+
+
+#### Accessing an SQL database
+##### Configuring and using JDBC
+Good
+##### Using Anorm to access your database
+##### Integrating with other database access libraries
+
+
+#### Using the Cache
+##### The Play cache API
+#### Calling WebServices
+##### The Play WS API
+##### Connecting to OpenID services
+##### Accessing resources protected by OAuth
+#### Integrating with Akka
+##### Setting up Actors and scheduling asynchronous tasks
+#### Internationalization
+##### Messages externalisation and i18n
+#### The application Global object
+##### Application global settings
+##### Intercepting requests
+#### Testing your application
+##### Writing tests
+##### Writing functional tests
+
+
+Advanced topics
+Handling data streams reactively
+Iteratees
+Enumerators
+Enumeratees
+HTTP Architecture
+HTTP API
+HTTP Filters
+Dependency Injection
+Controller Injection
+Example Projects
+Reverse routing
+Javascript Routing
+Extending Play
+Writing Plugins
+Tutorials
+Your first application
+
+
+
+
+
+
+
+
+
+
+
+
+
+http://sadache.tumblr.com/archive
+
+
+
+
