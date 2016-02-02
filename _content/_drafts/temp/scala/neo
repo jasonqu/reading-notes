@@ -2,7 +2,44 @@ https://windor.gitbooks.io/beginners-guide-to-scala/content/chp4-pattern-matchin
 
 http://danielwestheide.com/blog/2012/12/05/the-neophytes-guide-to-scala-part-3-patterns-everywhere.html
 
+Below, you will find links to all its 16 parts:
 
+Part 1: Extractors
+unapply
+
+Part 2: Extracting Sequences
+unapplySeq
+
+Part 3: Patterns Everywhere
+pattern match in for
+
+Part 4: Pattern Matching Anonymous Functions
+偏函数与collect
+
+Part 5: The Option type
+option
+
+Part 6: Error handling with Try
+try recover
+
+Part 7: The Either type
+
+Part 8: Welcome to the Future
+
+Part 9: Promises and Futures in practice
+
+Part 10: Staying DRY with higher-order functions
+类型别名 type
+
+Part 11: Currying and partially applied functions
+一个简单的di
+
+Part 12: Type classes
+
+Part 13: Path-dependent types
+Part 14: The Actor approach to concurrency
+Part 15: Dealing with Failure in Actor Systems
+Part 16: Where to go from here
 
 
 
