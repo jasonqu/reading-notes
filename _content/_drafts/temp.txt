@@ -1,0 +1,85 @@
+心理转变：不能怕犯错，谦虚的状态向同级上级请教
+提供可选方案，资源，依赖，困难，约束，可行性分析
+获得信任感 全面性 重大决策
+
+太严厉 太宽松
+被证明 可复制
+
+
+
+CSS
+inline a img
+block h1 div
+
+继承原则 <div><p>
+
+margin border padding content
+
+块元素 float none，clear之外
+块浮起来，自动漂流到元素边缘
+
+position static relative absolute(已定位父元素) fixed(window)
+
+css3 flexible box layout：box-orient/box-flex/box-align
+
+webfont
+
+响应式
+1. css2 media queries
+@media print{
+	nav{display:none;}
+}
+
+@media screen and (max-width:568px){
+	.column {
+	float:none;
+	width:96%;
+	margin:0 auto;}
+}
+
+2. 流式布局
+3. 弹性图片 与多媒体
+4. detectmobilebrowsers.com
+
+
+
+
+
+分组加密 应用模式 ECB 电子密码本 CBC 密码分组链
+RSA ECC DSA
+Hash：MD5 SHA
+
+password md5^2 (uin + password_md5)
+
+伪造 窃听 重放
+
+OpenID 一处登录 认证
+OAuth 授权
+合二为一
+
+Server校验 OIDB
+Https证书伪造
+skey 恶意行为踢下去
+
+
+
+产品经理 有意无意 尝试证明自己是正确的
+产品经理 有意无意 尝试反证自己不是错误的
+
+
+
+未来 半年 一年
+1. 有眼光
+2. 有能力 自信
+3. 有意义
+最重要部门
+过去 未来 挑战
+健康成长
+
+
+
+
+
+http://fex.baidu.com/blog/2015/05/cross-mobile/
+聊聊移动端跨平台开发的各种技术
+
