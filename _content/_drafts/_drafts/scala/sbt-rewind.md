@@ -575,6 +575,7 @@ http://www.scala-sbt.org/0.13/docs/index.html
 ## Community Plugins 
 important!
 http://www.scala-sbt.org/0.13/docs/Community-Plugins.html
+TO be evaluated
 
 ## Bintray For Plugins 
 ## Deploying to Sonatype 
@@ -1068,6 +1069,418 @@ TODO
 ## Dependency Management
 ### Artifacts
 
+#### Modifying default artifacts 
+
+```
+// disable publishing the main jar produced by `package`
+publishArtifact in (Compile, packageBin) := false
+publishArtifact in Test := true
+```
+
+```
+val myTask = taskKey[Unit]("My task.")
+
+myTask :=  {
+  val (art, file) = packagedArtifact.in(Compile, packageBin).value
+  println("Artifact definition: " + art)
+  println("Packaged file: " + file.getAbsolutePath)
+}
+```
+
+#### Defining custom artifacts 
+
+In addition to configuring the built-in artifacts, you can declare other artifacts to publish. 
+
+```
+Artifact("myproject", "zip", "zip")
+Artifact("myproject", "image", "jpg")
+Artifact("myproject", "jdk15")
+```
+
+https://ant.apache.org/ivy/history/2.3.0/ivyfile/dependency-artifact.html
 
 
-科技，金融，赌博是经济的什么模式
+#### Publishing .war files 
+
+TODO ?
+A common use case for web applications is to publish the .war file instead of the .jar file.
+
+```
+// disable .jar publishing 
+publishArtifact in (Compile, packageBin) := false 
+
+// create an Artifact for publishing the .war file 
+artifact in (Compile, packageWar) := {
+  val previous: Artifact = (artifact in (Compile, packageWar)).value
+  previous.copy(`type` = "war", extension = "war") 
+} 
+
+// add the .war file to what gets published 
+addArtifact(artifact in (Compile, packageWar), packageWar) 
+```
+
+#### Using dependencies with artifacts 
+
+
+
+### Dependency Management Flow 
+update 很慢，但是有很多任务都依赖它，如compile
+这里介绍这个过程，和怎样优化
+
+#### Background 
+#### Caching and Configuration 
+#### General troubleshooting steps  Important！！！
+
+
+
+###Library Management 
+细节较多，简单内容和tutorial类似
+
+#### Manual Dependency Management 
+
+unmanagedBase := baseDirectory.value / "custom_lib"
+
+unmanagedJars in Compile := (baseDirectory.value ** "*.jar").classpath
+
+unmanagedJars in Compile ++= {
+    val base = baseDirectory.value
+    val baseDirectories = (base / "libA") +++ (base / "b" / "lib") +++ (base / "libC")
+    val customJars = (baseDirectories ** "*.jar") +++ (base / "d" / "my.jar")
+    customJars.classpath
+}
+
+
+#### Automatic Dependency Management 
+
+libraryDependencies += groupID %% artifactID % revision
+
+This will use the right jar for the dependency built with the version of Scala that you are currently using. If you get an error while resolving this kind of dependency, that dependency probably wasn’t published for the version of Scala you are using. See Cross Build for details.
+
+##### Override default resolvers 
+
+可以通过修改externalResolvers 来添加默认repository
+http://www.scala-sbt.org/0.13/docs/Library-Management.html#Override+default+resolvers
+
+##### Override all resolvers for all builds 
+
+ ~/.sbt/repositories
+
+或修改  sbt.repository.config 启动参数
+
+##### Explicit URL 
+
+libraryDependencies += "slinky" % "slinky" % "2.1" from "https://slinky2.googlecode.com/svn/artifacts/2.1/slinky.jar"
+
+URL is only used as a fallback if the dependency cannot be found through the configured repositories. 
+
+
+##### Disable Transitivity 
+
+libraryDependencies += "org.apache.felix" % "org.apache.felix.framework" % "1.8.0" intransitive()
+
+##### Exclude Transitive Dependencies 
+
+libraryDependencies += 
+  "log4j" % "log4j" % "1.2.15" exclude("javax.jms", "jms")
+
+libraryDependencies +=
+  "log4j" % "log4j" % "1.2.15" excludeAll(
+    ExclusionRule(organization = "com.sun.jdmk"),
+    ExclusionRule(organization = "com.sun.jmx"),
+    ExclusionRule(organization = "javax.jms")
+  )
+
+
+##### Classifiers 
+
+libraryDependencies += "org.testng" % "testng" % "5.7" classifier "jdk15"
+
+##### Download Sources 
+
+libraryDependencies += 
+  "org.apache.felix" % "org.apache.felix.framework" % "1.8.0" withSources() withJavadoc()
+
+##### Inline Ivy XML 
+##### Ivy Home Directory 
+##### Checksums 
+##### Conflict Management
+
+依赖冲突检测
+
+conflictManager := ConflictManager.strict
+
+检查依赖细节
+
+show update
+
+
+##### Configurations 
+
+
+下载js
+
+```
+ivyConfigurations += config("js") hide
+
+libraryDependencies += "jquery" % "jquery" % "1.3.2" % "js->default" from "https://jqueryjs.googlecode.com/files/jquery-1.3.2.min.js"
+
+resources ++= update.value.select(configurationFilter("js"))
+```
+
+##### External Maven or Ivy 
+
+externalIvySettings(baseDirectory.value / "custom-settings-name.xml")
+externalPom(Def.setting(baseDirectory.value / "custom-name.xml"))
+
+
+
+### Proxy Repositories 
+
+~/.sbt/repositories 
+
+##### Launcher Script 
+sbt.override.build.repos 
+sbt.repository.config 
+
+
+
+### Publishing 
+
+publish publishLocal 
+
+upload to Nexus:
+
+publishTo := Some("Sonatype Snapshots Nexus" at "https://oss.sonatype.org/content/repositories/snapshots")
+
+local repository:
+
+publishTo := Some(Resolver.file("file",  new File( "path/to/my/maven-repo/releases" )) )
+
+with SNAPSHOT 
+
+publishTo := {
+  val nexus = "https://my.artifact.repo.net/"
+  if (isSnapshot.value)
+    Some("snapshots" at nexus + "content/repositories/snapshots") 
+  else
+    Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+}
+
+
+##### Credentials 略
+
+#### Publishing Locally 
+
+The version number you select must end with SNAPSHOT, or you must change the version number each time you publish.
+
+
+
+
+### Resolvers 
+
+预定义的和自定义的
+
+
+
+### Update Report 
+updateClassifiers and updateSbtClassifers.
+不知道有啥用
+
+
+### Cached resolution （experimental ）
+
+
+
+
+
+## Tasks and Commands 
+### Tasks 
+#### Defining a Task 
+
+实现task的三个点
+* 确定输入 Determine the settings and other tasks needed by the task. They are the task’s inputs.
+* 实现 Define the code that implements the task in terms of these inputs.
+* 确定scope Determine the scope the task will go in.
+
+```
+lazy val hello = taskKey[Unit]("Prints 'Hello World'")
+
+hello := println("hello world!")
+
+stringTask in Test := "Sample: " + sampleTask.value + ", int: " + intTask.value
+```
+
+分开定义
+```
+// Define a new, standalone task implemention
+lazy val intTaskImpl: Initialize[Task[Int]] =
+   Def.task { sampleTask.value - 3 }
+
+// Bind the implementation to a specific key
+intTask := intTaskImpl.value
+```
+
+#### Modifying an Existing Task 
+
+以前一个task作为新task的输入
+```
+// initial definition
+intTask := 3
+
+// overriding definition that references the previous definition
+intTask := intTask.value + 1
+```
+
+或完全重写
+
+### Getting values from multiple scopes 
+
+```
+<setting-or-task>.all(<scope-filter>).value
+```
+
+略
+
+### Advanced Task Operations 
+* Streams: Per-task logging 
+* Dynamic Computations with Def.taskDyn 
+* Handling Failure 
+
+
+
+## Input Tasks 
+带输入的task，似乎文档有些旧了，略
+
+
+## Commands 
+
+command是可以在console中运行的操作
+
+## Parsing and tab completion 
+针对Input Tasks 和Commands的
+
+## State and actions 
+高深 略
+
+## Tasks/Settings: Motivation 
+原因
+
+看例子，打包zip
+
+```
+val zip = taskKey[File]("zip task.")
+val zipPath = settingKey[File]("zipPath.")
+
+
+zip := {
+  val bin: File = (packageBin in Compile).value
+  val src: File = (packageSrc in Compile).value
+  val doc: File = (packageDoc in Compile).value
+  val out: File = zipPath.value
+  val inputs: Seq[(File,String)] = Seq(bin, src, doc) x Path.flat
+  IO.zip(inputs, out)
+  out
+}
+
+zipPath := target.value / "out.zip"
+```
+
+
+
+
+# Plugins and Best Practices 
+
+## General Best Practices 
+
+* project/ vs. ~/.sbt/ 
+* Local settings 
+* .sbtrc 
+* Don’t hard code 
+* Don’t “mutate” files 
+* Use absolute paths  myPath := baseDirectory.value / "licenses"
+* Parser combinators 
+
+
+## Plugins 
+
+### Using an auto plugin 
+
+手动生效plugin
+Many of the auto plugins automatically adds settings into projects, however, some may require explicit enablement. Here’s an example:
+
+```
+lazy val util = (project in file("util")).
+  enablePlugins(FooPlugin, BarPlugin).
+  disablePlugins(plugins.IvyPlugin).
+  settings(
+    name := "hello-util"
+  )
+```
+
+### By Description 
+TODO 
+
+### Plugin dependencies 
+TODO 
+
+### Creating an auto plugin 
+Important!!!
+
+
+
+## Plugins Best Practices
+Important!!!
+
+
+## Setting up Travis CI with sbt
+
+
+
+
+
+
+# Developer’s Guide (Work in progress)
+略
+
+
+
+
+# How to…
+略
+classpathTypes 
+dependencyClasspath 
+fullClasspath 
+fullClasspath in Test
+
+
+
+
+
+
+
+
+
+
+shellPrompt in ThisBuild := { state => Project.extract(state).currentRef.project + "> " },
+
+retrieveManaged := true,
+
+
+
+
+
+FAQ
+
+
+
+
+
+Others
+https://www.youtube.com/watch?v=V2rl62CZPVc
+https://www.playframework.com/documentation/2.4.x/SBTCookbook
+http://jsuereth.com/scala/2013/06/11/effective-sbt.html
+
+
+intellectual property我们翻译为“知识产权”
+台湾翻译为“智慧财产”
+

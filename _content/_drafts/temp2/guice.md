@@ -178,6 +178,7 @@ Lastly we create a binding that uses the annotation. This uses the optional anno
         .to(PayPalCreditCardProcessor.class);
 
 #####@Named
+
 像spring一样注入
 
 Guice comes with a built-in binding annotation @Named that uses a string:

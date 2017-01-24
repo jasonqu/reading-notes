@@ -1,9 +1,11 @@
+deprecated extracted
+
 Chapter 1
 > scalac File1.scala File2.scala
 > fsc File1.scala File2.scala
 fsc is a separate compiler process that continues to run, waiting for new compilation jobs,
 even after the compilation process is finished. This results in much faster compilation
-times, but if you¡¯re on a machine with limited RAM, you might not want to keep the
+times, but if youï¿½ï¿½re on a machine with limited RAM, you might not want to keep the
 compilation process alive.
 
 sample sum.scala:
@@ -47,7 +49,7 @@ import Moose._
 scala> bark
 
 
-·½·¨ÉùÃ÷
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 def largest(as: Int*): Int = as.reduceLeft((a, b) => a max b)
 A variable-length argument method may be called as follows:
 largest(1)
@@ -82,11 +84,11 @@ class Three extends One {
 
 
 
-¸³ÖµÊ±¿ÉÒÔÖ±½ÓÊ¹ÓÃtuple¸³Öµ
+ï¿½ï¿½ÖµÊ±ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½Ê¹ï¿½ï¿½tupleï¿½ï¿½Öµ
 val (i1: Int, s1: String) = Pair(33, "Moof")
 
 
-P57 call by name ·½·¨µÄµ÷ÓÃ·½Ê½
+P57 call by name ï¿½ï¿½ï¿½ï¿½ï¿½Äµï¿½ï¿½Ã·ï¿½Ê½
 
 P58 Functions, apply, update, and Compiler Magic
 Scala is a functional language, which means that you can pass functions to methods and
@@ -94,12 +96,12 @@ return them from methods and functions. A function is a block of code that takes
 and returns a value. In Scala, functions are instances. Given that Scala is constrained
 by the Java Virtual Machine, it cannot pass a pointer to an arbitrary block of code, so Scala
 implements functions as anonymous inner classes that have a particular interface. When
-you pass a function, you¡¯re just passing an object with a certain trait (interface).
+you pass a function, youï¿½ï¿½re just passing an object with a certain trait (interface).
 
 
 Case Class
 case class Stuff(name: String, age: Int)
-Ä¬ÈÏÊµÏÖÁËequals toString µÈ·½·¨£¬Ïàµ±ÓÚÏÂÃæµÄ´úÂë£º
+Ä¬ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½equals toString ï¿½È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½àµ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ë£º
 class Stuff(val name: String, val age: Int) {
 	override def toString = "Stuff("+name+","+age+")"
 	override def hashCode = name.hashCode + age
@@ -114,7 +116,7 @@ object Stuff {
 }
 
 
-Basic Pattern Matching ÒÑ¾­ºÜÇ¿´óÁË
+Basic Pattern Matching ï¿½Ñ¾ï¿½ï¿½ï¿½Ç¿ï¿½ï¿½ï¿½ï¿½
 Stuff("David", 45) match {
 	case Stuff("David", 45) => true
 	case _ => false
@@ -142,18 +144,18 @@ x match {
 	case s: String => "String: "+s
 	case _ => "Something else"
 }
-µÈ¼ÛÓÚÏÂÃæµÄjava
+ï¿½È¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½java
 if (x instanceOf Date) return "The date in milliseconds is "+((Date) x).getTime();
 if (x instanceOf URL) return "The URL path: "+((URL) x).getPath();
 if (x instanceOf String) return "String "+((String) x);
 return "Something else";
 
 
-forÑ­»·
+forÑ­ï¿½ï¿½
 
 val lst = (1 to 18 by 3).toList
 for {i <- lst if isOdd(i)} yield i
-½á¹ûÊÇ List[Int] = List(1, 7, 13)
+ï¿½ï¿½ï¿½ï¿½ï¿½ List[Int] = List(1, 7, 13)
 
 try-catch
 try {
@@ -167,15 +169,15 @@ try{Integer.parseInt("dog")} catch {case _ => 0}
 
 
 Chapter 3 Collecton
-Range ÊÇÑÓ³Ù³õÊ¼»¯µÄ
+Range ï¿½ï¿½ï¿½Ó³Ù³ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½
 (1 to Integer.MAX_VALUE - 1).take(5)
 
-List ·½·¨
-³õÊ¼»¯
+List ï¿½ï¿½ï¿½ï¿½
+ï¿½ï¿½Ê¼ï¿½ï¿½
 1 :: 2 :: 3 :: Nil
 List(1,2,3)
 
-¼ÓÔªËØ
+ï¿½ï¿½Ôªï¿½ï¿½
 99 :: x
 x ::: y
 
@@ -198,77 +200,77 @@ First Name of Valid Persons, Sorted by Age
 def validByAge(in: List[Person]) = in.filter(_.valid).
 sort(_.age < _.age). map(_.first)
 
-reduceº¯Êý
+reduceï¿½ï¿½ï¿½ï¿½
 List(8, 6, 22, 2).reduceLeft(_ max _)
 List(1,2,3,4).foldLeft(0) (_ + _)
 List(1,2,3,4).foldLeft(1) (_ * _)
 
-¹¹Ôì¶à¼¶List
+ï¿½ï¿½ï¿½ï¿½à¼¶List
 val n = (1 to 3).toList
 n.map(i => n.map(j => i * j))
-´ËÊ±½á¹ûÊÇ
+ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½
 List[List[Int]] = List(List(1, 2, 3), List(2, 4, 6), List(3, 6, 9))
-¿ÉÒÔÊ¹ÓÃflatmapÀ´½«¶à¼¶¶ÓÁÐ±äÎªÒ»¼¶
+ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½flatmapï¿½ï¿½ï¿½ï¿½ï¿½à¼¶ï¿½ï¿½ï¿½Ð±ï¿½ÎªÒ»ï¿½ï¿½
 n.flatMap(i => n.map(j => i * j))
 
 
 n.filter(isEven).flatMap(i => n.filter(isOdd).map(j => i * j))
-ºÍ
+ï¿½ï¿½
 for {i <- n if isEven(i); j <- n if isOdd(j)} yield i * j
-ÔÚbytecode²ã¼¶ÉÏÊÇÒ»ÑùµÄ
+ï¿½ï¿½bytecodeï¿½ã¼¶ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½
 
-Àý×Ó ÂÞÂíÊý×Öµ½°¢À­²®Êý×Ö×ª»¯ P66
+ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ P66
 
 
-Tuple Ôª×é
+Tuple Ôªï¿½ï¿½
 def sumSq(in: List[Double]): (Int, Double, Double) =
 in.foldLeft((0, 0d, 0d))((t, v) => (t._1 + 1, t._2 + v, t._3 + v * v))
-¶à¸ö·µ»ØÖµµÄÊ±ºòºÜÓÐÓÃ
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-Ò²¿ÉÒÔÐ´ÎªÕâÑù£¬¸ü¼Ó¿É¶Á
+Ò²ï¿½ï¿½ï¿½ï¿½Ð´Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿É¶ï¿½
 ef sumSq(in: List[Double]) : (Int, Double, Double) =
 in.foldLeft((0, 0d, 0d)){
 case((cnt,sum,sq),v)=> (cnt+1,sum+v,sq+v*v)}
 
-¶þÔª×é
+ï¿½ï¿½Ôªï¿½ï¿½
 scala> Tuple2(1,2) == Pair(1,2) 
 scala> Pair(1,2) == (1,2) 
 scala> (1,2) == 1 -> 2
 
 
 
-Map[K, V] ¹þÏ£±í
+Map[K, V] ï¿½ï¿½Ï£ï¿½ï¿½
 var p = Map(1 -> "David", 9 -> "Elwood")
-ÐÞ¸Äp Ö»ÄÜÓÃÕâÑùµÄ·½Ê½
+ï¿½Þ¸ï¿½p Ö»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä·ï¿½Ê½
 p = p + 8 -> "Archer"
-»ò
+ï¿½ï¿½
 p += 8 -> "Archer"
 
-Ö±½ÓÊ¹ÓÃapply·½·¨£¬ÔÚÃ»ÓÐÖµµÃÊ±ºòÅ×³öÒì³£
+Ö±ï¿½ï¿½Ê¹ï¿½ï¿½applyï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½Öµï¿½ï¿½Ê±ï¿½ï¿½ï¿½×³ï¿½ï¿½ì³£
 scala> p(9)
 res12: java.lang.String = Elwood
 scala> p(88)
 java.util.NoSuchElementException: key not found: 88
 
-µ«ÊÇÊ¹ÓÃget·½·¨£¬Èç¹ûÃ»ÓÐÖµ½«µÃµ½None£¬·ñÔòÊÇÒ»¸öSome
+ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½getï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½Öµï¿½ï¿½ï¿½Ãµï¿½Noneï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Some
 scala> p.get(88)
 res10: Option[java.lang.String] = None
 scala> p.get(9)
 res11: Option[java.lang.String] = Some(Elwood)
 
-Ò²¿ÉÒÔ¼ÓÒ»¸öÄ¬ÈÏÖµ
+Ò²ï¿½ï¿½ï¿½Ô¼ï¿½Ò»ï¿½ï¿½Ä¬ï¿½ï¿½Öµ
 scala> p.getOrElse(99, "Nobody")
 res55: java.lang.String = Nobody
 scala> p.getOrElse(1, "Nobody")
 res56: java.lang.String = David
 
-»ñÈ¡Ò»¸ökey¼¯µÄ½á¹û¼¯
+ï¿½ï¿½È¡Ò»ï¿½ï¿½keyï¿½ï¿½ï¿½Ä½ï¿½ï¿½ï¿½ï¿½
 scala> 1 to 5 flatMap(p.get)
 res53: Seq.Projection[java.lang.String] = RangeG(David)
 
-ÆäËû·½·¨
--= --= ÊÇremove
-contains exists Ç°ÃæµÄ²ÎÊýÊÇ¼¯ºÏ²ÎÊý£¬ºóÃæÊÇÒ»¸öboolµÄ·½·¨
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+-= --= ï¿½ï¿½remove
+contains exists Ç°ï¿½ï¿½Ä²ï¿½ï¿½ï¿½ï¿½Ç¼ï¿½ï¿½Ï²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½boolï¿½Ä·ï¿½ï¿½ï¿½
 p.keys.reduceLeft(_ max _)
 p.values.reduceLeft(_ max _)
 
@@ -276,23 +278,23 @@ def removeInvalid(in: Map[Int, Person]) = in.filter(kv => kv._2.valid)
 
 
 Option[T]
-Option[T] provides a container for zero or one element of a given type. Option provides a very powerful alternative to Java¡¯s null. An Option[T] can be either Some[T] or None. None is an object. There is a single instance of None in your Scala program, so it¡¯s kind of like null. But None has methods on it, so you can invoke map, flatMap, filter, foreach, and so on no matter whether you have Some or None.
-ÊÇÒ»¸öÓÐSome»òNone ¶ÔÏóµÄÀà£¬¿ÉÒÔÓÃÀ´±ÜÃâNPE
+Option[T] provides a container for zero or one element of a given type. Option provides a very powerful alternative to Javaï¿½ï¿½s null. An Option[T] can be either Some[T] or None. None is an object. There is a single instance of None in your Scala program, so itï¿½ï¿½s kind of like null. But None has methods on it, so you can invoke map, flatMap, filter, foreach, and so on no matter whether you have Some or None.
+ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Someï¿½ï¿½None ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½à£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½NPE
 
-ÈçÓÐÒ»¸ö´ÓÊý¾Ý¿âÖÐ»ñÈ¡ÊµÌåµÄ·½·¨
+ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½Ð»ï¿½È¡Êµï¿½ï¿½Ä·ï¿½ï¿½ï¿½
 def findPerson(key: Int): Option[Person]
-¿ÉÒÔÖ±½ÓÓÐÒ»¸ö»ñÈ¡ÄêÁäµÄ·½·¨
+ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ä·ï¿½ï¿½ï¿½
 def ageFromKey(key: Int): Option[Int] = findPerson(key).map(_.age)
-Áí¸ö·½·¨¶¼ÊÇ·µ»ØSome»òNone
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½Someï¿½ï¿½None
 
-¿´Ò»ÏÂÔÚÀàÐÍ×ª»¯ÉÏµÄÓ¦ÓÃ
+ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½Ïµï¿½Ó¦ï¿½ï¿½
 import java.lang.{Boolean => JBool}
 def tryo[T](f: => T): Option[T] = try {Some(f)} catch {case _ => None}
 
 def toInt(s: String): Option[Int] = tryo(s.toInt)
 def toBool(s: String) = tryo(JBool.parseBoolean(s))
 
-ÊµÀý ´ÓÒ»¸öMap»ñÈ¡Person¶ÔÏó P97 ÓÐjava´úÂë¶Ô±È
+Êµï¿½ï¿½ ï¿½ï¿½Ò»ï¿½ï¿½Mapï¿½ï¿½È¡Personï¿½ï¿½ï¿½ï¿½ P97 ï¿½ï¿½javaï¿½ï¿½ï¿½ï¿½Ô±ï¿½
 def personFromParams(p: Map[String, String]): Option[Person] = 
 	for {name <- p.get("name")
 	ageStr <- p.get("age")
@@ -320,7 +322,7 @@ res1: scala.xml.Elem = <b id="greeting">Hello World</b>
 scala> <b ns:hi='hello'>Hello</b>
 res2: scala.xml.Elem = <b ns:hi="hello">Hello</b>
 
-Scala represents XML as a Seq[Node], and Node is a superclass of NodeSeq, which is a subclass of Seq[Node]. That means all the collections methods that we¡¯ve been exploring are available on XML collections including map, flatMap, filter, and foreach. This also means that XML can be used in for comprehensions. We¡¯ll explore that in the next subsection.
+Scala represents XML as a Seq[Node], and Node is a superclass of NodeSeq, which is a subclass of Seq[Node]. That means all the collections methods that weï¿½ï¿½ve been exploring are available on XML collections including map, flatMap, filter, and foreach. This also means that XML can be used in for comprehensions. Weï¿½ï¿½ll explore that in the next subsection.
 scala> def len(seq: Seq[_]) = seq.length
 ????????????????len: (Seq[_])Int
 
@@ -329,13 +331,13 @@ res1: Int = 1
 scala> len(List(1,2,3))
 res11: Int = 3
 
-XML ¿ÉÒÔ±»¶¯Ì¬Éú³É
+XML ï¿½ï¿½ï¿½Ô±ï¿½ï¿½ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½
 def now = System.currentTimeMillis.toString
 <b time={now}>Hello World</b>
 
 <stuff>{(1 to 3).map(i => <v id={i.toString}>#{i}</v>)} </stuff>
 
-µ«ÊÇif ºóÃæ±ØÐëÓÐ else
+ï¿½ï¿½ï¿½ï¿½if ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ else
 <b>{if (true) "dogs"}</b> wrong
 <b>{if (true) "dogs" else ""}</b> right
 
@@ -345,7 +347,7 @@ res3: scala.xml.Elem = <b>Hello &amp; Goodbye</b>
 scala> <b attr={"Hello < Zoo"}/>
 res6: scala.xml.Elem = <b attr="Hello &lt; Zoo"></b>
 
-but if you¡¯re trying to embed a script in your XML, it might not be the right thing:
+but if youï¿½ï¿½re trying to embed a script in your XML, it might not be the right thing:
 You can use PCData to embed unescaped characters in your XML: 
 scala> <script>{PCData(info)}</script>
 
@@ -365,7 +367,7 @@ res11: Seq[String] = ArrayBuffer(http://liftweb.net, http://scala-lang.org, ...
 
 scala> val x2 = <x>{(1 to 3).map(i => <i>{i}</i>)}</x>
 x2: scala.xml.Elem = <x><i>1</i><i>2</i><i>3</i></x>
-Let¡¯s find all the <i> tags: 
+Letï¿½ï¿½s find all the <i> tags: 
 scala> x2 \ "i"
 res26: scala.xml.NodeSeq = <i>1</i><i>2</i><i>3</i>
 Now, get the text from each tag:
@@ -395,7 +397,7 @@ val xmlBooks =
 <book instruction="add" name="book2" status=""/> </books>
 
 new RuleTransformer(removeIt).transform(xmlBooks)
-Ïê¼û P109
+ï¿½ï¿½ï¿½ P109
 
 
 Concurrency Without Synchronization
@@ -404,25 +406,25 @@ P111 Listing 3-8. Multics.scala
 
 
 
-Chapter 4 º¯Êý
+Chapter 4 ï¿½ï¿½ï¿½ï¿½
 
-º¯Êý¾ÍÊÇ¶ÔÏó
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¶ï¿½ï¿½ï¿½
 scala> val f: Int => String = x => "Dude: "+x
 f: Int => String = <function1>
 
-¿ÉÒÔ×÷Îª²ÎÊý´«Èë
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 scala> def w42(f: Int => String) = f(42)
 w42: (f: Int => String)String
 scala> w42(f)
 res4: String = Dude: 42
 
-¼¸ÖÖµ÷ÓÃ·½Ê½
+ï¿½ï¿½ï¿½Öµï¿½ï¿½Ã·ï¿½Ê½
 scala> w42((i:Int) => f(i))
 scala> w42(i => f(i))
 scala> w42(f(_))
 scala> w42(f)
 
-desugerºóµÄ·½·¨ÊÇÕâÑùµÄ£º
+desugerï¿½ï¿½Ä·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½
 w42(new Function1[Int, String] { 
 def apply(i: Int) = f(i)
 })
@@ -434,7 +436,7 @@ scala> w42 {i => (1 to i).mkString(",")}
 
 Partial Application and Functions
 
-Methods and functions are different things. In Scala, everything except a method is an instance; therefore methods are not instances. Methods are attached to instances and can be invoked on instances. Functions are instances that implement a FunctionNN trait, where NN is the number of parameters the function takes. There¡¯s nothing magic at runtime about functions. However, at compile time, there is plenty of syntactic sugar that makes the number of characters required to create a function very, very small.
+Methods and functions are different things. In Scala, everything except a method is an instance; therefore methods are not instances. Methods are attached to instances and can be invoked on instances. Functions are instances that implement a FunctionNN trait, where NN is the number of parameters the function takes. Thereï¿½ï¿½s nothing magic at runtime about functions. However, at compile time, there is plenty of syntactic sugar that makes the number of characters required to create a function very, very small.
 Scala traces its roots to functional languages including ML and Haskell. In these languages, a function that takes two Ints and returns a String is the same as a function that takesanIntandreturnsafunctionthattakesanIntandreturnsaString.Thus(Int, Int) => String and Int => Int => String are the same in Haskell but not in Scala. Haskell makes it easy to create a new function by applying the first parameter to a function that will return a new function that can then be passed around or applied. This is called partial application because some of the parameters are passed to the function rather than all the parameters being applied to the function. Scala requires a separate syntax to automatically generate partially applied functions.
 scala> def plus(a: Int, b: Int) = "Result is: "+(a + b)
 plus: (a: Int, b: Int)String
@@ -467,7 +469,7 @@ res22: String = Result is: 43
 
 
 Functions and Type Parameters
-Methods can have type parameters. Type parameters define the type of other parameters or of the method¡¯s return value. Note that functions cannot take type parameters. The parameter and return types of a function must be defined when the function is created.
+Methods can have type parameters. Type parameters define the type of other parameters or of the methodï¿½ï¿½s return value. Note that functions cannot take type parameters. The parameter and return types of a function must be defined when the function is created.
 
 scala> def t42[T](f: Int => T): T = f(42)
 t42: [T](f: Int => T)T
@@ -481,12 +483,12 @@ scala> t42(1 +)
 warning: there were 1 feature warning(s); re-run with -feature for details
 res24: Int = 43
 
-¿ÉÒÔÏÔÊ¾¶¨ÒåÎªÕâÑù
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½
 t42[Int](1 +)
 
 
 Functions Bound to Variables in Scope
-Functions are bound to the variables in the scope in which the function is created. This can come in very handy as it allows you to carry state around with them. For example, let¡¯s create a variable, foo, and assign it a value
+Functions are bound to the variables in the scope in which the function is created. This can come in very handy as it allows you to carry state around with them. For example, letï¿½ï¿½s create a variable, foo, and assign it a value
 scala> val foo = "dog"
 foo: String = dog
 
@@ -497,7 +499,7 @@ scala> whoTo("I love my")
 res25: String = I love my dog
 
 Functions can be bound to vars and vals. 
-¿ÉÒÔÔÚ·½·¨ÄÚ²¿ÐÞ¸Ä±äÁ¿
+ï¿½ï¿½ï¿½ï¿½ï¿½Ú·ï¿½ï¿½ï¿½ï¿½Ú²ï¿½ï¿½Þ¸Ä±ï¿½ï¿½ï¿½
 scala> var strs: List[String] = Nil
 strs: List[String] = List()
 
@@ -518,37 +520,37 @@ res30: List[String] = List(r, q, p, b, a)
 
 
 Putting Functions in Containers
-¿ÉÒÔ½²·½·¨¿´×ö¶ÔÏó£¬·ÅÔÚÈÝÆ÷Àï
-Let¡¯s create a function, bf, which takes an Int and returns a function:
+ï¿½ï¿½ï¿½Ô½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ó£¬·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+Letï¿½ï¿½s create a function, bf, which takes an Int and returns a function:
 
 scala> def bf: Int => Int => Int = i => v => i + v
 bf: Int => (Int => Int)
 scala> val fs = (1 to 5).map(bf).toArray
 fs: Array[Int => Int] = Array(<function1>, <function1>, <function1>, <function1>
 , <function1>)
-We¡¯ve got an Array[Int => Int],
+Weï¿½ï¿½ve got an Array[Int => Int],
 
 scala> fs(0)(1)
 res0: Int = 2
 scala> fs(4)(3)
 res2: Int = 8
 
-It¡¯s theoretically cool that functions are instances that can be manipulated like any
+Itï¿½ï¿½s theoretically cool that functions are instances that can be manipulated like any
 other instance. There are practical uses of putting functions in Maps and Lists. Functions
-represent blocks of code¡ªinstructions on how to do something that is within a particular
+represent blocks of codeï¿½ï¿½instructions on how to do something that is within a particular
 context and that is bound to variables in a particular scope. The ability to bind functions
 to events, such as the user clicking a button on a screen, which may occur in the future,
 provides a powerful way to build interactive, event-based applications.
 
 
 Functions and Interactive Applications P105
-Ò»¸öÊ¾Àý£¬²»Ì«Çå³þÏëÒªÕ¹Ê¾Ê²Ã´£¬¿ÉÄÜÊÇcallbackµÄÓÃ·¨°É
+Ò»ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì«ï¿½ï¿½ï¿½ï¿½ï¿½ÒªÕ¹Ê¾Ê²Ã´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½callbackï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½
 Callbacks are very common in interactive applications. For example, if a button is clicked,
 perform a particular action.
 
 
 Building New Functions
-Ò»¸öÑùÀýÕ¹Ê¾ÔõÑù´´½¨Ò»¸ö¼òµ¥µÄ¼ÆËãÆ÷£¬²»¹ýÃ»ÓÐ¸Ð¾õÓÐÊ²Ã´ÌØ±ðµÄ
+Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ¹Ê¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½òµ¥µÄ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½Ð¸Ð¾ï¿½ï¿½ï¿½Ê²Ã´ï¿½Ø±ï¿½ï¿½
 object Interactive extends App {
 sealed trait Expr
 case class Add(left: Expr, right: Expr) extends Expr
@@ -586,16 +588,16 @@ print(Calc.calc(Mul(Var("x"), Add(Val(1), Val(2))), Map("x" -> 5)))
 
 
 Call-by-Name, Call-by-Value, and General Laziness
-ÔÚjavaÖÐ£¬´«¸øº¯ÊýµÄ²ÎÊý×ÜÊÇÔÚµ÷ÓÃº¯ÊýÖµÇ°¾Í¼ÆËãºÃÁËµÄ£¬ÏñÕâ¸ö£º
+ï¿½ï¿½javaï¿½Ð£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½ï¿½Ãºï¿½ï¿½ï¿½ÖµÇ°ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ËµÄ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 foo(1 + 1, "A String".length());
 
-µ«ÓÐÊ±ÎÒÃÇÐèÒªcall by name¾ÍÊÇÃ¿´ÎÓÃµ½¶¼¼ÆËã
+ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªcall by nameï¿½ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 However, there are some cases when we want to
 parameters to be optionally evaluated or repeatedly evaluated. In these cases, Scala
-provides the call-by-name mechanism. There¡¯s no syntactic difference to the caller for
+provides the call-by-name mechanism. Thereï¿½ï¿½s no syntactic difference to the caller for
 call-by-name parameters.
 
-ÀýÈçÈÕÖ¾¾ÍÊÇÒ»¸öºÜÃ÷ÏÔµÄÀý×Ó
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¾ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôµï¿½ï¿½ï¿½ï¿½ï¿½
 if (logger.level().intValue() >= INFO.intValue()) {
 logger.log(INFO, "The value is "+value);
 }
@@ -606,11 +608,11 @@ def log(level: Level, msg: => String) =
 
 And you would call this code:
 log(INFO, "The value is "+value)
-´ËÊ±×Ö·û´®Æ´½Ó½«»áÔÚÊµ¼Êµ÷ÓÃlog·½·¨µÄÊ±ºòÖ´ÐÐ¡£
-×¢Òâ¶¨Òå·½·¨µÄÊ±ºòÊ¹ÓÃ=>ÔÚÀàÐÍÇ°¼´¿É
-¼´foo(s: String) is call-by-reference, and foo(s: => String) is call-by-name.
+ï¿½ï¿½Ê±ï¿½Ö·ï¿½ï¿½ï¿½Æ´ï¿½Ó½ï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½Êµï¿½ï¿½ï¿½logï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ö´ï¿½Ð¡ï¿½
+×¢ï¿½â¶¨ï¿½å·½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ê¹ï¿½ï¿½=>ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½
+ï¿½ï¿½foo(s: String) is call-by-reference, and foo(s: => String) is call-by-name.
 
-ÄÇÃ´ÕâÑùµÄ³ÌÐòÐ§ÂÊ»áÔõÑùÄØ£¿¾­ÊÔÑé»¹ÊÇºÜ¿ìµÄ
+ï¿½ï¿½Ã´ï¿½ï¿½ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½Ð§ï¿½Ê»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½é»¹ï¿½ÇºÜ¿ï¿½ï¿½
 You may be wondering how the code could possibly perform as well if a function object
 is being created and handed off to the log method. In the JVM, the cost of creating an
 object that never escapes the current thread and is very short-lived is zero or very near
@@ -618,7 +620,7 @@ zero. The JVM may also inline the log method such that the test is performed wit
 actual method call. The result is that your code will run as quickly with the Scala code as it
 will with the Java code that has the repeated test for log level.
 
-³ýÁËÑÓ³Ù¼ÆËã£¬»¹ÓÐÒ»¸öÓÃ´¦ÊÇ¿ÉÄÜ±»µ÷ÓÃ¶à´Î£¬ÇÒÃ¿´Î¶¼ÐèÒªÖØÐÂ¼ÆËãµÄÇé¿ö£¬ÈçÅÐ¶ÏÎÄ¼þÊÇ²»ÊÇ¶ÁÍêÁËline == null£º
+ï¿½ï¿½ï¿½ï¿½ï¿½Ó³Ù¼ï¿½ï¿½ã£¬ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ã´ï¿½ï¿½Ç¿ï¿½ï¿½Ü±ï¿½ï¿½ï¿½ï¿½Ã¶ï¿½Î£ï¿½ï¿½ï¿½Ã¿ï¿½Î¶ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½Ä¼ï¿½ï¿½Ç²ï¿½ï¿½Ç¶ï¿½ï¿½ï¿½ï¿½ï¿½line == nullï¿½ï¿½
 def allStrings(expr: => String): List[String] = expr match {
 	case null => Nil
 	case s => s :: allStrings(expr)
@@ -626,17 +628,17 @@ def allStrings(expr: => String): List[String] = expr match {
 import java.io._
 val br = new BufferedReader(new FileReader("foo.txt"))
 allStrings(br.readLine)
-¾Í»á·µ»ØËùÓÐµÄÄÚÈÝ
+ï¿½Í»á·µï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½ï¿½ï¿½ï¿½ï¿½
 
-Call-by-name is a very useful construct. In the next section, we¡¯ll use it to build
+Call-by-name is a very useful construct. In the next section, weï¿½ï¿½ll use it to build
 complex control structures. 
-ÈçC#µÄÕâ¸öÓï·¨
+ï¿½ï¿½C#ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï·¨
 using (TextReader textReader = new StreamReader(filename))
 {
 	return textReader.ReadLine();
 }
 
-ÔÚscalaÖÐ£¬ÎÒÃÇ¿ÉÒÔºÜÈÝÒ×µÄ¶¨ÒåÕâÑùµÄ½á¹¹
+ï¿½ï¿½scalaï¿½Ð£ï¿½ï¿½ï¿½ï¿½Ç¿ï¿½ï¿½Ôºï¿½ï¿½ï¿½ï¿½×µÄ¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä½á¹¹
 object Control {
   def using[A <: {def close(): Unit}, B](param: A)(f: A => B): B = 
   try {
@@ -653,9 +655,9 @@ object Control {
     ret.toList
   }
 }
-Ç°ÃæÊÇusing¹Ø¼ü×ÖµÄ¶¨Òå£¬ºóÃæÊÇ½«Ò»¶Î´úÂë·Åµ½Ò»¸ölistÖÐµÄ·½·¨
+Ç°ï¿½ï¿½ï¿½ï¿½usingï¿½Ø¼ï¿½ï¿½ÖµÄ¶ï¿½ï¿½å£¬ï¿½ï¿½ï¿½ï¿½ï¿½Ç½ï¿½Ò»ï¿½Î´ï¿½ï¿½ï¿½Åµï¿½Ò»ï¿½ï¿½listï¿½ÐµÄ·ï¿½ï¿½ï¿½
 
-ÕâÑùÔÚJDBCÑ­»·ÖÐ¾Í¿ÉÒÔÊ¹ÓÃÁË£¬±ÈÈçÓÐÒ»¶Îjava´úÂëÊÇÕâÑùµÄ£º
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½JDBCÑ­ï¿½ï¿½ï¿½Ð¾Í¿ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½Ë£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½javaï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½
 import java.sql.*;
 import java.util.ArrayList;
 public class Person {
@@ -689,7 +691,7 @@ public class Person {
 	}
 }
 
-Ê¹ÓÃÐÂµÄ½á¹¹Ð´³öÀ´¾ÍÊÇ
+Ê¹ï¿½ï¿½ï¿½ÂµÄ½á¹¹Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 object Person {
 	import Control._
 	import java.sql._
@@ -706,17 +708,17 @@ object Person {
 
 
 Chapter5 Pattern Matching
-ÖØÐ´fibonacci
+ï¿½ï¿½Ð´fibonacci
 def fibonacci(in: Int): Int = in match {
 	case 0 => 0
 	case 1 => 1
 	case n => fibonacci(n - 1) + fibonacci(n - 2)
 }
-Ò²¿ÉÒÔ½«0µÄÌõ¼þ¸ÄÎªcase n if n <= 0 => 0
+Ò²ï¿½ï¿½ï¿½Ô½ï¿½0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªcase n if n <= 0 => 0
 
-Êµ¼ÊÉÏscalaÔÚ±àÒëÆÚ¼ä»á¼ì²écaseÓï¾ä£¬½«Ìõ¼þÅÐ¶Ï½µµ½×îµÍ
+Êµï¿½ï¿½ï¿½ï¿½scalaï¿½Ú±ï¿½ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½ï¿½caseï¿½ï¿½ä£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶Ï½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-hint ¿ÉÒÔÊ¹ÓÃ scalac -print MyMules.scala À´²é¿´scalaµÄjava
+hint ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ scalac -print MyMules.scala ï¿½ï¿½ï¿½é¿´scalaï¿½ï¿½java
 object MyMules {
 	def myMules(name: String) = name match {
 		case "Elwood" | "Madeline" => Some("Cat")
@@ -725,9 +727,9 @@ object MyMules {
 		case _ => None
 	}
 }
-¶ÔÓ¦µÄ¾Í²»¿´ÁË£¬ºÜ³¤
+ï¿½ï¿½Ó¦ï¿½Ä¾Í²ï¿½ï¿½ï¿½ï¿½Ë£ï¿½ï¿½Ü³ï¿½
 
-scalaµÄcase¿ÉÒÔÕë¶Ô²»Í¬µÄÀàÐÍ£º
+scalaï¿½ï¿½caseï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô²ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½
 def test1(in: Any): String = in match {
 	case 1 => "One"
 	case "David" | "Archer" | Some("Dog") => "Walk"
@@ -735,7 +737,7 @@ def test1(in: Any): String = in match {
 }
 
 Pattern matching is a very powerful way to avoid explicit casting.
-ÀàÐÍÅÐ¶ÏÔÚÄ£Ê½Æ¥ÅäÖÐºÜ¼òµ¥£º
+ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½Ä£Ê½Æ¥ï¿½ï¿½ï¿½ÐºÜ¼òµ¥£ï¿½
 def test2(in: Any) = in match {
 	case s: String => "String, length "+s.length
 	case i: Int if i > 0 => "Natural Int"
@@ -750,22 +752,22 @@ We saw case classes earlier in the book. They are classes that get toString, has
 equals methods automatically. It turns out that they also get properties and extractors.
 Case classes also have properties and can be constructed without using new.
 
-Case class×Ô¶¯Éú³ÉÁËtoString¡¢hashCode¡¢equals·½·¨£¬²¢ÇÒÐÂ½¨¶ÔÏó²»ÐèÒªÊ¹ÓÃnew¹Ø¼ü×Ö
-Èç
+Case classï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½toStringï¿½ï¿½hashCodeï¿½ï¿½equalsï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÒªÊ¹ï¿½ï¿½newï¿½Ø¼ï¿½ï¿½ï¿½
+ï¿½ï¿½
 case class Person(name: String, age: Int, valid: Boolean)
 val p = Person("David", 45, true)
-¿ÉÒÔÖ±½ÓÊ¹ÓÃp.name ÕâÑùµÄÊôÐÔ
+ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½Ê¹ï¿½ï¿½p.name ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-Ò²¿ÉÒÔÊ¹ÊôÐÔÎª¿É±äµÄ±äÁ¿
+Ò²ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½Îªï¿½É±ï¿½Ä±ï¿½ï¿½ï¿½
 case class MPerson(var name: String, var age: Int)
 
-Ê¹ÓÃcase class¿ÉÒÔÇáËÉ´´½¨¸÷ÖÖ·½·¨£¬ÈçÏÂÃæµÄÅÐ¶ÏÄêÁä²¢ÌáÈ¡nameÊôÐÔµÄ·½·¨
+Ê¹ï¿½ï¿½case classï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ä²¢ï¿½ï¿½È¡nameï¿½ï¿½ï¿½ÔµÄ·ï¿½ï¿½ï¿½
 def older(p: Person): Option[String] = p match {
 	case Person(name, age, true) if age > 35 => Some(name)
 	case _ => None
 }
 
-ListÒ²¿ÉÒÔÕâÑùÓÃ£º
+ListÒ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½
 scala> val x = 1
 x: Int = 1
 scala> val rest = List(2,3,4)
@@ -783,14 +785,14 @@ hing
 1
 List(2, 3, 4)
 
-ÕâÀïÊÇÒ»¸öÆæÊýÇóºÍµÄ·½·¨
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÍµÄ·ï¿½ï¿½ï¿½
 def sumOdd(in: List[Int]): Int = in match {
 	case Nil => 0
 	case x :: rest if x % 2 == 1 => x + sumOdd(rest)
 	case _ :: rest => sumOdd(rest)
 }
 
-Õâ¸ö·½·¨ÊÇÈ¥µôËùÓÐµÄÏàÁÚÖØ¸´Ïî P148
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¥ï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø¸ï¿½ï¿½ï¿½ P148
 def noPairs[T](in: List[T]): List[T] = in match {
 	case Nil => Nil
 	case a :: b :: rest if a == b => noPairs(a :: rest)
@@ -798,23 +800,23 @@ def noPairs[T](in: List[T]): List[T] = in match {
 }
 noPairs(List(1,2,3,3,3,4,1,1))
 
-È¥µôÁÐ±íÖÐignoreÖ®Ç°µÄ×Ö·û´®£º
+È¥ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½ignoreÖ®Ç°ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½
 def ignore(in: List[String]): List[String] = in match {
 	case Nil => Nil
 	case _ :: "ignore" :: rest => ignore(rest)
 	case x :: rest => x :: ignore(rest)
 }
 
-²éÕÒËùÓÐµÄString
+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½String
 def getStrings(in: List[Any]): List[String] = in match {
 	case Nil => Nil
 	case (s: String) :: rest => s :: getStrings(rest)
 	case _ :: rest => getStrings(rest)
 }
 However, the paradigmatic way of filtering a List[Any] into a List of a particular type
-is by using a pattern as a function. We¡¯ll see this in the ¡°Pattern Matching As Functions¡±
+is by using a pattern as a function. Weï¿½ï¿½ll see this in the ï¿½ï¿½Pattern Matching As Functionsï¿½ï¿½
 section.
-¿´ÉÏÈ¥ListÊÇÒ»¸öÌØÊâµÄÀà£¬Êµ¼ÊÉÏ²»ÊÇ£¬ÎÒÃÇÉî¾¿Ò»ÏÂ£º
+ï¿½ï¿½ï¿½ï¿½È¥Listï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½à£¬Êµï¿½ï¿½ï¿½Ï²ï¿½ï¿½Ç£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½î¾¿Ò»ï¿½Â£ï¿½
 
 
 

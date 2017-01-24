@@ -99,3 +99,32 @@ return nested();
 }
 checkscope() // => "nested scope"
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+to be eval
+http://jonham.cn/test/PasswordInput/
+http://www.gfzj.us/page2/
+https://blog.cnbluebox.com/

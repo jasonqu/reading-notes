@@ -51,6 +51,7 @@ for gradle
 
 logback.xml配置文件示例：
 
+	<!-- 自动扫描logback的配置文件是否更新 -->
 	<configuration scan="true" scanPeriod="60 seconds" debug="false">
 	    <!-- 用来输出 logback 调试信息的配置 -->
 	    <statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener" />
@@ -105,7 +106,7 @@ logback.xml配置文件示例：
 	</configuration>
 
 
-<a name="lazyeval"></a>对应的Logger API可以这样使用，注意字符串不需要在参数接口处拼接，因此避免了类似``if(logger.isDebugEnabled()) {logger.debug(...)}``这样的if判断：
+<a name="lazyeval"></a>对应的Logger API可以使用模板字符串带入参数，而不需要在参数接口处拼接字符串，因此避免了类似``if(logger.isDebugEnabled()) {logger.debug(...)}``这样的if判断：
 
 > HelloWorld.java
 
@@ -254,7 +255,7 @@ MDC是`Mapped Diagnostic Context`的简称，用来输出不同的上下文。�
 
 这给调试差日志造成了很大困难。
 
-我们可以这样改写配置文件，使用MDC加`SiftingAppender`解决这个问题：
+我们可以改写配置文件，使用MDC加`SiftingAppender`来解决这个问题：
 
 	
 	<configuration>
@@ -397,7 +398,7 @@ MDC是`Mapped Diagnostic Context`的简称，用来输出不同的上下文。�
 
 可以看到日志按规则分开了。这个功能一般可以用在多线程程序中，可以清楚地看到每个线程的执行内容。
 
-不过更强的功能意味着更大的复杂性，注意put和remove必须放在同一个线程里，否则肯定会有奇怪的现象发生。
+不过更强的功能意味着更大的复杂性，**注意put和remove必须放在同一个线程里**，否则肯定会有奇怪的现象发生。
 
 参考资料：
 
@@ -411,3 +412,77 @@ MDC是`Mapped Diagnostic Context`的简称，用来输出不同的上下文。�
 * logback 架构与流程，与性能优势介绍 http://logback.qos.ch/manual/architecture.html
 * http://aub.iteye.com/blog/1101222
 * 手册中文翻译 http://dl2.iteye.com/upload/attachment/0086/3438/e0ea2ac8-98bb-31f2-b4c6-9a43bf8baa75.pdf
+
+
+
+
+
+ps.每次创建日志都带上时间戳：
+
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+    <!-- 用来输出 logback 调试信息的配置 -->
+    <statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener" />
+    
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <prudent>false</prudent>
+        <!-- 按照时间格式滚动的策略，如果gz、zip结尾会自动压缩 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/clickTdw.log.%d{yyyy-MM-dd-HH}</fileNamePattern>
+        </rollingPolicy>
+
+        <!-- 只保存最近2个备份文件 -->
+        <maxHistory>2</maxHistory>
+
+        <!-- 日志输出格式 -->
+        <encoder>
+            <pattern>%-4relative %d{yyyy-MM-dd HH-mm-ss} [%thread] %-5level %logger{35} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 按名日志输出文件 -->
+    <appender name="FILE2" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/mylog.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/mylog-%d{yyyy-MM-dd_HH-mm}.log.gz</fileNamePattern>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%-4relative %d{yyyy-MM-dd HH-mm-ss} [%thread] %-5level %logger{35} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 标准输出 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 自定义名的logger -->
+    <logger name="mylog" level="INFO">
+        <appender-ref ref="FILE2" />
+    </logger>
+
+    <!-- 根下带有两个appender -->
+    <root level="DEBUG">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="FILE" />
+    </root>
+
+</configuration>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
